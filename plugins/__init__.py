@@ -1,6 +1,5 @@
 import os
 import importlib
-from plugins.Plugin import Plugin
 
 #导入插件包，主要就是执行其中的注册功能
 

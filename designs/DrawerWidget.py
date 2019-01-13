@@ -9,10 +9,10 @@ class DrawerContentItem(QFrame):
 
     __CHECKABLE_STYLE = "#drawerContentItem{background-color:#fffefc}QPushButton{color:black;text-align:left}"
     __UNCHECKABLE_STYLE = "#drawerContentItem{background-color:#fffefc}QPushButton{color:black;text-align:left}#drawerContentItem:hover{background-color:#defffa}"
-    __CHECKED_STYLE = "#drawerContentItem{background-color:#aaffff}QPushButton{color:black;text-align:left}"
+    __CHECKED_STYLE = "#drawerContentItem{background-color:rgba(255, 170, 127, 120)}QPushButton{color:black;text-align:left}"
 
     # 定义信号
-    clickedSignal = pyqtSignal(bool)
+    clickedSignal = pyqtSignal(object,bool)
 
     def __init__(self, title, icon=None, parent=None):
         super().__init__(parent)
@@ -52,6 +52,16 @@ class DrawerContentItem(QFrame):
     def isChecked(self):
         return self.__checked
 
+    def setChecked(self,b):
+        self.__checked = b
+        if self.checkable:
+            if self.__checked:
+                # 设置选中时的样式
+                self.setStyleSheet(self.__CHECKED_STYLE)
+            else:
+                # 恢复样式
+                self.setStyleSheet(self.__CHECKABLE_STYLE)
+
 
     def eventFilter(self, QObject, QEvent):
         if QObject is self.titleBtn or QObject is self.iconBtn:
@@ -66,7 +76,7 @@ class DrawerContentItem(QFrame):
                             #恢复样式
                             self.setStyleSheet(self.__CHECKABLE_STYLE)
                     #发射点击信号
-                    self.clickedSignal.emit(self.__checked)
+                    self.clickedSignal.emit(self, self.__checked)
                     return True
             else:
                 return False
@@ -116,6 +126,7 @@ class DrawerItemHeader(QFrame):
                             self.labelBtn.setIcon(self.dIcon)
                         else:
                             self.labelBtn.setIcon(self.rIcon)
+
                     return True
             else:
                 return False
@@ -123,6 +134,9 @@ class DrawerItemHeader(QFrame):
             return False
 
 class DrawerItem(QFrame):
+
+    SINGLE_TOGGLE = 0#在同一时刻只有一个能保持触发状态
+    MULTI_TOGGLE = 1#在同一时刻可以有多个个能保持触发状态
 
     def __init__(self, title, parent=None):
         super().__init__(parent)
@@ -146,11 +160,30 @@ class DrawerItem(QFrame):
         self.downFrame.setVisible(False)
         self.upFrame.setBody(self.downFrame)
 
+        self.toggle_mode = DrawerItem.SINGLE_TOGGLE
+        self.contentItems = []
+
     def addContentItem(self, item):
         if isinstance(item, DrawerContentItem):
             self.dVLayout.addWidget(item)
+            self.contentItems.append(item)
+            item.clickedSignal.connect(self.contentItemToggled)
         else:
             raise TypeError("item must inherit DrawerContentItem")
+
+    @pyqtSlot(object,bool)
+    def contentItemToggled(self, obj,b):
+        if self.toggle_mode == self.SINGLE_TOGGLE:
+            if b:
+                for item in self.contentItems:
+                    if not item is obj and item.isChecked():
+                        item.setChecked(False)
+                        break
+
+
+    def setToggleModel(self, mode):
+        self.toggle_mode = mode
+
 
 
 class DrawerWidget(QWidget):
