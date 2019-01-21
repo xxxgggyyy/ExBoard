@@ -7,12 +7,12 @@ import designs.resources
 
 class DrawerContentItem(QFrame):
 
-    __CHECKABLE_STYLE = "#drawerContentItem{background-color:#fffefc}QPushButton{color:black;text-align:left}"
-    __UNCHECKABLE_STYLE = "#drawerContentItem{background-color:#fffefc}QPushButton{color:black;text-align:left}#drawerContentItem:hover{background-color:#defffa}"
-    __CHECKED_STYLE = "#drawerContentItem{background-color:rgba(255, 170, 127, 120)}QPushButton{color:black;text-align:left}"
+    __CHECKABLE_STYLE = "#drawerContentItem{background-color:#ffffff}QPushButton{color:black;text-align:left}"
+    __UNCHECKABLE_STYLE = "#drawerContentItem{background-color:#ffffff}QPushButton{color:black;text-align:left}#drawerContentItem:hover{background-color:#defffa}"
+    __CHECKED_STYLE = "#drawerContentItem{background-color:#1a7dc4}QPushButton{color:black;text-align:left}"
 
     # 定义信号
-    clickedSignal = pyqtSignal(object,bool)
+    clickedSignal = pyqtSignal(object, bool)
 
     def __init__(self, title, icon=None, parent=None):
         super().__init__(parent)
@@ -99,7 +99,7 @@ class DrawerItemHeader(QFrame):
         self.labelBtn = QPushButton(self.rIcon, '', self)
         self.labelBtn.setFixedSize(30, 30)
         self.labelBtn.setFlat(True)
-        self.labelBtn.setEnabled(False)
+        self.labelBtn.setEnabled(True)
         self.titleBtn = QPushButton(title, self)
         self.titleBtn.setFixedHeight(30)
         self.titleBtn.setFlat(True)
@@ -107,7 +107,7 @@ class DrawerItemHeader(QFrame):
         self.titleBtn.installEventFilter(self)
         self.labelBtn.installEventFilter(self)
         self.setObjectName("drawerHeader")
-        self.setStyleSheet("#drawerHeader{border:1px solid gray;background-color:#e9e7e5}QPushButton{color:black}")
+        self.setStyleSheet("#drawerHeader{border:1px solid gray;background-color:#ffffff}QPushButton{color:black}")
         self.hLayout.addWidget(self.labelBtn)
         self.hLayout.addWidget(self.titleBtn)
         self.toggleState = False
@@ -170,6 +170,10 @@ class DrawerItem(QFrame):
             item.clickedSignal.connect(self.contentItemToggled)
         else:
             raise TypeError("item must inherit DrawerContentItem")
+
+    def addContentItems(self, items):
+        for item in items:
+            self.addContentItem(item)
 
     @pyqtSlot(object,bool)
     def contentItemToggled(self, obj,b):

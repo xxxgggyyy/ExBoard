@@ -8,5 +8,5 @@ if __name__=='__main__':
     mw = MainWindow()
     ExInterFace.init(mw)
     ExInterFace.addBorad("new")
-    mw.show()
+    mw.showMaximized()
     exit(app.exec())
