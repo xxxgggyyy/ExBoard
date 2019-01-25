@@ -89,6 +89,12 @@ class MainWindow(QMainWindow):
             #挂载插件设置界面控件
             self.settingDialog.addPluginSetting(plugin.getPluginName(), plugin.getPluginSettingWidget())
 
+            #挂载插件dockwidget 默认在右边
+            if plugin.getDockWidgets():
+                for dock in plugin.getDockWidgets():
+                    self.addDockWidget(Qt.RightDockWidgetArea,dock)
+
+
         #放入插件管理器控件
         self.pluginManagerWidget.addAllPlugins(plugins)
 
@@ -98,7 +104,7 @@ class MainWindow(QMainWindow):
     def boardPropertyChanged(self, item):
         row = self.ui.board_pro_table.indexFromItem(item).row()
         board = self.ui.board_tabs.currentWidget()
-        setattr(board,self.__board_properties[row]['proName'], item.text())
+        setattr(board, self.__board_properties[row]['proName'], item.text())
 
     @pyqtSlot(int)
     def closeTab(self, index):

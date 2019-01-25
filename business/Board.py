@@ -45,8 +45,13 @@ class Board(QFrame):
 
     def registerPlugins(self, plugins):
         self.__plugins = plugins
-        #挂载弹出菜单选项
         for plugin in self.__plugins:
+            #用board初始化plugin
+            plugin.boardInit(self)
+            #连接信号
+            plugin.repaintSignal.connect(self.repaint)
+
+            # 挂载弹出菜单选项
             if plugin.getPopMenus():
                 for item in plugin.getPopMenus():
                     if isinstance(item, QMenu):
@@ -93,4 +98,5 @@ class Board(QFrame):
             print(e)
 
     def contextMenuEvent(self,QContextMenuEvent):
-        self.popMenu.popup(QContextMenuEvent.globalPos())
+        pass
+        #self.popMenu.popup(QContextMenuEvent.globalPos())

@@ -1,6 +1,8 @@
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject,pyqtSlot,pyqtSignal
 #定义插件的接口
 class Plugin(QObject):
+
+    repaintSignal = pyqtSignal()
 
     def __init__(self, name):
         super().__init__()
@@ -8,6 +10,9 @@ class Plugin(QObject):
 
     def init(self):#初始化代码 连接数据库 加载配置文件之类的
         '''最好不要在初始化之时调用其他插件的接口'''
+        pass
+
+    def boardInit(self, Board):#这个初始化将会延迟到 board创建的时候才会执行
         pass
 
     def getToolItems(self):#主程序获取插件中侧边栏的工具栏控件
@@ -18,6 +23,9 @@ class Plugin(QObject):
 
     def getPluginDescription(self):
         return "该插件没有描述信息"
+
+    def getDockWidgets(self):
+        pass
 
     def getBoardProperty(self):#返回一个 插件会给board添加的属性字符数组 主要用来在侧边栏显示
         pass
