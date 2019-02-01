@@ -61,3 +61,6 @@ class Plugin(QObject):
 
     def paintEvent(self, QPaintEvent, Board):
         pass
+
+    def wheelEvent(self, QWheelEvent, Board):
+        pass

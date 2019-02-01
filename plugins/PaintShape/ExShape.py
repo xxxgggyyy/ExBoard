@@ -138,13 +138,19 @@ class ExLine(ExShape):
     def getPoints(self):
         return [self.pt0, self.pt1]
 
-    def setPt0(self,x,y):
-        self.pt0.x = x
-        self.pt0.y = y
+    def setPt0(self,*args):
+        if len(args) ==2:
+            self.pt0.x = args[0]
+            self.pt0.y = args[1]
+        elif len(args) ==1:
+            self.pt0 = args[0]
 
-    def setPt1(self,x,y):
-        self.pt1.x = x
-        self.pt1.y = y
+    def setPt1(self,*args):
+        if len(args) ==2:
+            self.pt1.x = args[0]
+            self.pt1.y = args[1]
+        elif len(args) ==1:
+            self.pt1 = args[0]
 
     def draw(self, QPainter, MainPlugin):
         if self.visible:
@@ -277,38 +283,51 @@ class ExArc(ExShape):
 
     def __init__(self, *args):
         super().__init__()
-        self.x = None
-        self.y = None
-        self.width = None
-        self.height = None
+
         self.startAngle = None
         self.spanAngle = None
         self.pt0 = None
         self.pt1 = None
         self.pt2 = None
-        if len(args) == 6:
-            self.x = args[0]
-            self.y = args[1]
-            self.width = args[2]
-            self.height = args[3]
-            self.startAngle = args[4]
-            self.spanAngle = args[5]
+
+        self.center = ExPoint()
+        self.r = None
+
+        self.threshold = 1.5
+
+        if len(args) == 5:
+            self.center.x = args[0]
+            self.center.y = args[1]
+            self.r = args[2]
+            self.startAngle = args[3]
+            self.spanAngle = args[4]
+        elif len(args) == 4:
+            self.center = args[0]
+            self.r = args[1]
+            self.startAngle = args[2]
+            self.spanAngle = args[3]
 
     def setValue(self,*args):
-        if len(args) != 6:
-            raise TypeError("不支持的参数数量")
-        self.x = args[0]
-        self.y = args[1]
-        self.width = args[2]
-        self.height = args[3]
-        self.startAngle = args[4]
-        self.spanAngle = args[5]
 
-    def setRect(self,x,y,width,height):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+        if len(args) == 5:
+            self.center.x = args[0]
+            self.center.y = args[1]
+            self.r = args[2]
+            self.startAngle = args[3]
+            self.spanAngle = args[4]
+        elif len(args) == 4:
+            self.center = args[0]
+            self.r = args[1]
+            self.startAngle = args[2]
+            self.spanAngle = args[3]
+        else:
+            raise TypeError("不支持的参数数量")
+
+    def setCenter(self, pt):
+        self.center = pt
+
+    def setRadius(self,r):
+        self.r = r
 
     def setStartAngle(self,angle):
         self.startAngle = angle
@@ -328,11 +347,10 @@ class ExArc(ExShape):
     def calculate(self):
 
         #先判断一下三个点是否 在阈值下 为一条直线 如果是 则返回False
-        line = ExLine(self.pt0,self.pt1)
+        line = ExLine(self.pt0, self.pt1)
         line.setThreshold(2.5)
         if line.isPointOnShapeNoLimit(self.pt2, None):
             return False
-
 
         # 计算直线的一般方程
         a = self.pt1.y - self.pt0.y
@@ -353,12 +371,14 @@ class ExArc(ExShape):
         D2 = -b*k1 + k*b1
 
         centerPt = ExPoint(D1/D, D2/D)
+        self.center = centerPt
         r = math.sqrt((centerPt.x - self.pt0.x)**2+(centerPt.y - self.pt0.y)**2)
+        self.r = r
 
-        self.x = centerPt.x - r
+        '''self.x = centerPt.x - r
         self.y = centerPt.y - r
         self.width = 2* r
-        self.height = 2*r
+        self.height = 2*r'''
 
         angle0 = ExArc.calculateAngel(self.pt0, centerPt, r)
         angle2 = ExArc.calculateAngel(self.pt2, centerPt, r)
@@ -412,12 +432,11 @@ class ExArc(ExShape):
             return []
 
     def clear(self):
-        self.x = None
-        self.y = None
         self.startAngle = None
         self.spanAngle = None
 
     def isPointOnShape(self, pt, MainPlugin):
+
         return False
 
     def draw(self, QPainter, MainPlugin):
@@ -431,8 +450,8 @@ class ExArc(ExShape):
             pen.setCapStyle(Qt.RoundCap)
             QPainter.setPen(pen)
             # 绘制图形
-            if self.x!=None and self.y!=None and self.width !=None and self.height!=None and self.startAngle!=None and self.spanAngle!=None:
-                QPainter.drawArc(self.x*MainPlugin.unit_pixel,self.y*MainPlugin.unit_pixel,self.width*MainPlugin.unit_pixel,self.height*MainPlugin.unit_pixel,self.startAngle*16,self.spanAngle*16)
+            if self.startAngle!=None and self.spanAngle!=None and self.r != None:
+                QPainter.drawArc((self.center.x - self.r)*MainPlugin.unit_pixel,(self.center.y - self.r)*MainPlugin.unit_pixel,2*self.r*MainPlugin.unit_pixel,2*self.r*MainPlugin.unit_pixel,self.startAngle*16,self.spanAngle*16)
 
             QPainter.restore()
 
@@ -470,8 +489,9 @@ class ExCircle(ExShape):
 
     def isPointOnShape(self, pt, MainPlugin):
         threhold = 2
-        rr = (pt.x - self.centerPt.x)*(pt.x - self.centerPt.x) + (pt.y - self.centerPt.y)*(pt.y - self.centerPt.y)
-        if rr >= self.r*self.r - threhold and rr <= self.r*self.r + threhold:
+        rr = (pt.x - self.centerPt.x)**2 + (pt.y - self.centerPt.y)**2
+        r = math.sqrt(rr)
+        if r >= self.r - threhold and r <= self.r + threhold:
             return True
         else:
             return False

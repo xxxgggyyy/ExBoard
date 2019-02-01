@@ -97,6 +97,11 @@ class Board(QFrame):
         except Exception as e:
             print(e)
 
+    def wheelEvent(self, QWheelEvent):
+        if self.__plugins:
+            for plugin in self.__plugins:
+                plugin.wheelEvent(QWheelEvent, self)
+
     def contextMenuEvent(self,QContextMenuEvent):
         pass
         #self.popMenu.popup(QContextMenuEvent.globalPos())
