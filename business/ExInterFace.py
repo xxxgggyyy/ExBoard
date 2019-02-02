@@ -26,6 +26,13 @@ class ExInterFace:
         return ExInterFace.__plugins
 
     @staticmethod
+    def getPlugin(name):
+        for plugin in ExInterFace.__plugins:
+            if plugin.getPluginName() == name:
+                return plugin
+        raise RuntimeError("not found plugin named "+name)
+
+    @staticmethod
     def init(mainWnd):
         ExInterFace.__main_window = mainWnd
         # 在这里完成插件的加载
@@ -56,3 +63,11 @@ class ExInterFace:
     def setBackgroundColor(color):
         ExInterFace.__background_color = color
         ExInterFace.applySettingToAll()
+
+    @staticmethod
+    def getCurrentBoard():
+        return ExInterFace.__main_window.getCurrentBoard()
+
+    @staticmethod
+    def getBoard(index):
+        return ExInterFace.__main_window.getBoard(index)

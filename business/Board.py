@@ -62,45 +62,46 @@ class Board(QFrame):
     def mouseReleaseEvent(self, QMouseEvent):
         if self.__plugins:
             for plugin in self.__plugins:
-                plugin.mouseReleaseEvent(QMouseEvent, self)
+                plugin.mouseReleaseEvent(QMouseEvent)
 
     def mousePressEvent(self, QMouseEvent):
         if self.__plugins:
             for plugin in self.__plugins:
-                plugin.mousePressEvent(QMouseEvent, self)
+                plugin.mousePressEvent(QMouseEvent)
 
     def mouseDoubleClickEvent(self, QMouseEvent):
         if self.__plugins:
             for plugin in self.__plugins:
-                plugin.mouseDoubleClickEvent(QMouseEvent, self)
+                plugin.mouseDoubleClickEvent(QMouseEvent)
 
     def mouseMoveEvent(self, QMouseEvent):
         if self.__plugins:
             for plugin in self.__plugins:
-                plugin.mouseMoveEvent(QMouseEvent, self)
+                plugin.mouseMoveEvent(QMouseEvent)
 
-    def keyPressEvent(self, *args, **kwargs):
+    def keyPressEvent(self, QKeyEvent):
+
         if self.__plugins:
             for plugin in self.__plugins:
-                plugin.keyPressEvent(args, self)
+                plugin.keyPressEvent(QKeyEvent)
 
-    def keyReleaseEvent(self, *args, **kwargs):
+    def keyReleaseEvent(self, QKeyEvent):
         if self.__plugins:
             for plugin in self.__plugins:
-                plugin.keyReleaseEvent(args, self)
+                plugin.keyReleaseEvent(QKeyEvent)
 
     def paintEvent(self, QPaintEvent):
         try:
             if self.__plugins:
                 for plugin in self.__plugins:
-                    plugin.paintEvent(QPaintEvent, self)
+                    plugin.paintEvent(QPaintEvent)
         except Exception as e:
             print(e)
 
     def wheelEvent(self, QWheelEvent):
         if self.__plugins:
             for plugin in self.__plugins:
-                plugin.wheelEvent(QWheelEvent, self)
+                plugin.wheelEvent(QWheelEvent)
 
     def contextMenuEvent(self,QContextMenuEvent):
         pass

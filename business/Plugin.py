@@ -40,27 +40,31 @@ class Plugin(QObject):
         pass
 
     #这些定义的接口将在 Layer中相应的函数中得到调用
-    def keyPressEvent(self, QKeyEvent, Board):
+    def keyPressEvent(self, QKeyEvent):
         pass
 
-    def keyReleaseEvent(self, QKeyEvent, Board):
+    def keyReleaseEvent(self, QKeyEvent):
         pass
 
-    def mouseDoubleClickEvent(self, QMouseEvent, Board):
+    def mouseDoubleClickEvent(self, QMouseEvent):
         pass
 
-    def mouseMoveEvent(self, QMouseEvent, Board):
+    def mouseMoveEvent(self, QMouseEvent):
         #开了Tracking所以只要鼠标移动就会调用，不用按下左键
         pass
 
-    def mousePressEvent(self, QMouseEvent, Board):
+    def mousePressEvent(self, QMouseEvent):
         pass
 
-    def mouseReleaseEvent(self, QMouseEvent, Board):
+    def mouseReleaseEvent(self, QMouseEvent):
         pass
 
-    def paintEvent(self, QPaintEvent, Board):
+    def paintEvent(self, QPaintEvent):
         pass
 
-    def wheelEvent(self, QWheelEvent, Board):
+    def wheelEvent(self, QWheelEvent):
+        pass
+
+    @pyqtSlot(int)
+    def boardSwitched(self, curindex):
         pass

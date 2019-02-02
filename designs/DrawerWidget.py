@@ -175,14 +175,19 @@ class DrawerItem(QFrame):
         for item in items:
             self.addContentItem(item)
 
-    @pyqtSlot(object,bool)
-    def contentItemToggled(self, obj,b):
+    @pyqtSlot(object, bool)
+    def contentItemToggled(self, obj, b):
         if self.toggle_mode == self.SINGLE_TOGGLE:
             if b:
                 for item in self.contentItems:
                     if not item is obj and item.isChecked():
                         item.setChecked(False)
                         break
+
+    def setChecked(self, obj, b):
+        obj.setChecked(b)
+        #self.contentItemToggled(obj, b)
+        obj.clickedSignal.emit(obj, b)
 
 
     def setToggleModel(self, mode):

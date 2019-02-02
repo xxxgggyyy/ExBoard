@@ -546,8 +546,8 @@ class CirclePoint(ExPoint):
 
 class FreeLine(ExLine):
 
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.pen = QPen()
         self.pen.setColor(Qt.gray)
         self.pen.setStyle(Qt.DotLine)
@@ -566,4 +566,31 @@ class FreeLine(ExLine):
             # 绘制图形
             QPainter.drawLine(self.pt0.x * MainPlugin.unit_pixel, self.pt0.y * MainPlugin.unit_pixel,
                                   self.pt1.x * MainPlugin.unit_pixel, self.pt1.y * MainPlugin.unit_pixel)
+            QPainter.restore()
+
+
+class ExOriginCross(ExShape):
+
+    def __init__(self):
+        super().__init__()
+        self.color = Qt.black
+
+    def drawIt(self, QPainter,scale):
+        if self.visible:
+            QPainter.save()
+
+            pen = QPen()
+            pen.setColor(self.color)
+            pen.setWidth(2/scale)
+            QPainter.setPen(pen)
+
+            QPainter.drawLine(0,0,0,130/scale)
+            QPainter.drawLine(0,0,130/scale,0)
+
+            QPainter.drawLine(0,130/scale,-10/scale,120/scale)
+            QPainter.drawLine(0,130/scale,10/scale,120/scale)
+
+            QPainter.drawLine(130/scale,0,120/scale,10/scale)
+            QPainter.drawLine(130/scale,0,120/scale,-10/scale)
+
             QPainter.restore()

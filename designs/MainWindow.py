@@ -7,11 +7,17 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.Qt import Qt
 
 class BoardTabWidget(QtWidgets.QTabWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setFocusPolicy(Qt.StrongFocus)
+
+    def keyPressEvent(self, QKeyEvent):
+        self.currentWidget().keyPressEvent(QKeyEvent)
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

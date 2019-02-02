@@ -94,6 +94,9 @@ class MainWindow(QMainWindow):
                 for dock in plugin.getDockWidgets():
                     self.addDockWidget(Qt.RightDockWidgetArea,dock)
 
+            #连接信号
+            #tab切换的信号
+            self.ui.board_tabs.currentChanged.connect(plugin.boardSwitched)
 
         #放入插件管理器控件
         self.pluginManagerWidget.addAllPlugins(plugins)
@@ -150,3 +153,10 @@ class MainWindow(QMainWindow):
         for i in range(self.ui.board_tabs.count()):
             re.append(self.ui.board_tabs.widget(i))
         return re
+
+
+    def getCurrentBoard(self):
+        return self.ui.board_tabs.currentWidget()
+
+    def getBoard(self,index):
+        return self.ui.board_tabs.widget(index)
