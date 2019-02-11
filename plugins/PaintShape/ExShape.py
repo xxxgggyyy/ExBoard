@@ -6,6 +6,10 @@ import math
 
 class ExShape:
 
+    changeable_properties = [{'proName':'color','name':"颜色",'itemWdg':None,'type':QColor}, {'proName':'selected','name':"选中",'itemWdg':None,'type':bool},
+                             {'proName': 'visible', 'name': "可见", 'itemWdg': None, 'type': bool}]
+
+
     def __init__(self):
         self.color = QColor(Qt.black)#默认颜色
         self.penStyle = Qt.SolidLine
@@ -37,11 +41,11 @@ class ExShape:
 
     @selected.setter
     def selected(self, b):
-        if b:
+        '''if b:
             #在这个设置选中颜色
             self.color = QColor(Qt.green)
         else:
-            self.color = QColor(Qt.black)
+            self.color = QColor(Qt.black)'''
         self.__selected = b
 
     def isPointOnShape(self, pt, MainPlugin):
@@ -50,7 +54,21 @@ class ExShape:
     def isPointNearShape(self,pt,r,MainPlugin):
         pass
 
+    def getPropertiesList(self):
+        return ExShape.changeable_properties
+
+    def changeValueByPropertiesList(self, index, value):
+        propertyDict = self.getPropertiesList()[index]
+        if propertyDict["type"] == bool:
+            pass
+
+
 class ExPoint(ExShape):
+
+    changeable_properties = []
+
+    def getPropertiesList(self):
+        return super().getPropertiesList() + ExPoint.changeable_properties
 
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -165,6 +183,17 @@ class ExLine(ExShape):
 
             #绘制图形
             QPainter.drawLine(self.pt0.x*MainPlugin.unit_pixel,self.pt0.y*MainPlugin.unit_pixel,self.pt1.x*MainPlugin.unit_pixel,self.pt1.y*MainPlugin.unit_pixel)
+            if self.selected:
+                dotLineInterval = 1.2
+                pen.setColor(Qt.gray)
+                pen.setStyle(Qt.DotLine)
+                pen.setWidth(2)
+                QPainter.setPen(pen)
+                QPainter.drawLine((self.pt0.x+dotLineInterval) * MainPlugin.unit_pixel, self.pt0.y * MainPlugin.unit_pixel,
+                                  (self.pt1.x+dotLineInterval) * MainPlugin.unit_pixel, self.pt1.y * MainPlugin.unit_pixel)
+                QPainter.drawLine((self.pt0.x-dotLineInterval) * MainPlugin.unit_pixel, self.pt0.y * MainPlugin.unit_pixel,
+                                  (self.pt1.x-dotLineInterval) * MainPlugin.unit_pixel, self.pt1.y * MainPlugin.unit_pixel)
+
             QPainter.restore()
 
     def isPointOnShapeNoLimit(self, pt, MainPlugin):
@@ -283,7 +312,7 @@ class ExArc(ExShape):
 
     def __init__(self, *args):
         super().__init__()
-
+        #逆时针方向
         self.startAngle = None
         self.spanAngle = None
         self.pt0 = None
@@ -410,7 +439,7 @@ class ExArc(ExShape):
         return True
 
     @staticmethod
-    def calculateAngel(pt,centerPt, r):#计算以centerPt为圆心 pt和x轴的角度
+    def calculateAngel(pt,centerPt, r):#计算以centerPt为圆心 pt和x轴的角度 从x轴开始的逆时针角度
         angle = math.asin((pt.y - centerPt.y) / r) * (180 / math.pi)
 
         if pt.y > centerPt.y:
@@ -436,8 +465,33 @@ class ExArc(ExShape):
         self.spanAngle = None
 
     def isPointOnShape(self, pt, MainPlugin):
+        #先判断是否在圆上再判断是否在角度范围内
+        threhold = 2
+        rr = (pt.x - self.center.x) ** 2 + (pt.y - self.center.y) ** 2
+        r = math.sqrt(rr)
+        if r >= self.r - threhold and r <= self.r + threhold:
+            x = pt.x
+            y = pt.y
+            if r > self.r:
+                if pt.x > self.center.x:
+                    x = pt.x - threhold
+                else:
+                    x = pt.x + threhold
 
-        return False
+                if pt.y > self.center.y:
+                    y = pt.y - threhold
+                else:
+                    y = pt.y + threhold
+            ptTemp = ExPoint(x, y)
+            angle = ExArc.calculateAngel(ptTemp,self.center,self.r)
+            #print(angle," ", self.startAngle, " ",self.spanAngle)
+            if angle > self.startAngle and angle < self.startAngle+self.spanAngle:
+                return True
+            elif self.startAngle+self.spanAngle > 360:
+                if angle < self.startAngle+self.spanAngle - 360:
+                    return True
+        else:
+            return False
 
     def draw(self, QPainter, MainPlugin):
         if self.visible:
@@ -452,6 +506,21 @@ class ExArc(ExShape):
             # 绘制图形
             if self.startAngle!=None and self.spanAngle!=None and self.r != None:
                 QPainter.drawArc((self.center.x - self.r)*MainPlugin.unit_pixel,(self.center.y - self.r)*MainPlugin.unit_pixel,2*self.r*MainPlugin.unit_pixel,2*self.r*MainPlugin.unit_pixel,self.startAngle*16,self.spanAngle*16)
+
+            if self.selected:
+                dotLineInterval = 1.2
+                pen.setColor(Qt.gray)
+                pen.setStyle(Qt.DotLine)
+                pen.setWidth(2)
+                QPainter.setPen(pen)
+                QPainter.drawArc((self.center.x - self.r - dotLineInterval) * MainPlugin.unit_pixel,
+                                 (self.center.y - self.r - dotLineInterval) * MainPlugin.unit_pixel, 2 * (self.r+dotLineInterval) * MainPlugin.unit_pixel,
+                                 2 * (self.r+dotLineInterval) * MainPlugin.unit_pixel, self.startAngle * 16, self.spanAngle * 16)
+                QPainter.drawArc((self.center.x - self.r + dotLineInterval) * MainPlugin.unit_pixel,
+                                 (self.center.y - self.r + dotLineInterval) * MainPlugin.unit_pixel,
+                                 2 * (self.r - dotLineInterval) * MainPlugin.unit_pixel,
+                                 2 * (self.r - dotLineInterval) * MainPlugin.unit_pixel, self.startAngle * 16,
+                                 self.spanAngle * 16)
 
             QPainter.restore()
 
@@ -510,6 +579,17 @@ class ExCircle(ExShape):
             QPainter.setPen(pen)
             QPainter.drawEllipse((self.centerPt.x - self.r) * MainPlugin.unit_pixel, (self.centerPt.y - self.r) * MainPlugin.unit_pixel,
                                  2 * self.r * MainPlugin.unit_pixel, 2 * self.r * MainPlugin.unit_pixel)
+
+            if self.selected:
+                dotLineInterval = 1.2
+                pen.setColor(Qt.gray)
+                pen.setStyle(Qt.DotLine)
+                pen.setWidth(2)
+                QPainter.setPen(pen)
+                QPainter.drawEllipse((self.centerPt.x - self.r - dotLineInterval) * MainPlugin.unit_pixel, (self.centerPt.y - self.r - dotLineInterval) * MainPlugin.unit_pixel,
+                                 2 * (self.r+dotLineInterval) * MainPlugin.unit_pixel, 2 * (self.r+dotLineInterval) * MainPlugin.unit_pixel)
+                QPainter.drawEllipse((self.centerPt.x - self.r + dotLineInterval) * MainPlugin.unit_pixel, (self.centerPt.y - self.r + dotLineInterval) * MainPlugin.unit_pixel,
+                                 2 * (self.r-dotLineInterval) * MainPlugin.unit_pixel, 2 * (self.r-dotLineInterval) * MainPlugin.unit_pixel)
 
             QPainter.restore()
 

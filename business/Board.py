@@ -18,6 +18,8 @@ class Board(QFrame):
         self.setMouseTracking(True)
         self.setObjectName("Board")
 
+        self.setFocusPolicy(Qt.StrongFocus)
+
     def setBackgroundColor(self, color):
         self.setStyleSheet("#Board{background-color:#"+color+"}")
 
@@ -102,6 +104,12 @@ class Board(QFrame):
         if self.__plugins:
             for plugin in self.__plugins:
                 plugin.wheelEvent(QWheelEvent)
+
+    def focusInEvent(self, QFocusEvent):
+        self.setStyleSheet("border:2px dashed #1a7dc4")
+
+    def focusOutEvent(self, *args, **kwargs):
+        self.setStyleSheet("")
 
     def contextMenuEvent(self,QContextMenuEvent):
         pass

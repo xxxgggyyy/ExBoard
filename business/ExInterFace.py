@@ -40,6 +40,8 @@ class ExInterFace:
         #将插件注册到mainWindow中
         ExInterFace.__main_window.registerPulgins(ExInterFace.__plugins)
 
+        print("所有插件加载完成")
+
     @staticmethod
     def addBorad(name):
         board = Board(name, ExInterFace.__main_window)

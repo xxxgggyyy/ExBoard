@@ -1,3 +1,9 @@
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QMenu,QAction
+from PyQt5.QtGui import QMouseEvent
+
+from .designs import resources
+
 from business import Plugin,ExInterFace
 from designs import DrawerItem, DrawerContentItem
 from .PaintShapeSettingWidget import PaintShapSettingWidget
@@ -7,9 +13,6 @@ from .ShapePropertyDockWidget import ShapePropertyDockWidget
 import configparser
 import copy
 import math
-
-from PyQt5.QtCore import pyqtSlot
-from PyQt5.QtGui import QMouseEvent
 
 class MainPlugin(Plugin):
 
@@ -82,19 +85,19 @@ class MainPlugin(Plugin):
 
 
         #实例化drawerContentItem 即用于侧边栏的按钮
-        self.__lineContenItem = DrawerContentItem("直线(&Q)", parent=self.__drawerItem)
+        self.__lineContenItem = DrawerContentItem("直线(&Q)", parent=self.__drawerItem, icon=QIcon(":/paintshape_res/img/line.png"))
         self.__allContentItem.append(self.__lineContenItem)
 
-        self.__arcContenItem = DrawerContentItem("圆弧(&W)", parent=self.__drawerItem)
+        self.__arcContenItem = DrawerContentItem("圆弧(&W)", parent=self.__drawerItem, icon=QIcon(":/paintshape_res/img/arc.png"))
         self.__allContentItem.append(self.__arcContenItem)
 
-        self.__circleContenItem = DrawerContentItem("圆(&E)", parent=self.__drawerItem)
+        self.__circleContenItem = DrawerContentItem("圆(&E)", parent=self.__drawerItem, icon=QIcon(":/paintshape_res/img/circle.png"))
         self.__allContentItem.append(self.__circleContenItem)
 
-        self.__handContenItem = DrawerContentItem("Hand(&R)", parent=self.__drawerItem)
+        self.__handContenItem = DrawerContentItem("Hand(&R)", parent=self.__drawerItem, icon=QIcon(":/paintshape_res/img/hand.png"))
         self.__allContentItem.append(self.__handContenItem)
 
-        self.__selectContenItem = DrawerContentItem("选择(&T)", parent=self.__drawerItem)
+        self.__selectContenItem = DrawerContentItem("选择(&T)", parent=self.__drawerItem, icon=QIcon(":/paintshape_res/img/select.png"))
         self.__allContentItem.append(self.__selectContenItem)
 
         #添加到drawerItem
@@ -102,6 +105,38 @@ class MainPlugin(Plugin):
 
         #创建属性dockwidget
         self.propertyDock = ShapePropertyDockWidget("图形属性")
+
+        #菜单
+        self.paintShapeMenu = QMenu("绘图")
+
+        self.lineAction = QAction(QIcon(":/paintshape_res/img/line.png"), "直线(&Q)", self.paintShapeMenu)#讲道理 这里可以用eval简化写法
+        self.lineAction.setCheckable(True)
+        self.lineAction.triggered.connect(self.lineActionToggled)
+        self.paintShapeMenu.addAction(self.lineAction)
+
+        self.arcAction = QAction(QIcon(":/paintshape_res/img/arc.png"), "圆弧(&W)", self.paintShapeMenu)
+        self.arcAction.setCheckable(True)
+        self.arcAction.triggered.connect(self.arcActionToggled)
+        self.paintShapeMenu.addAction(self.arcAction)
+
+        self.circleAction = QAction(QIcon(":/paintshape_res/img/circle.png"), "圆(&E)", self.paintShapeMenu)
+        self.circleAction.setCheckable(True)
+        self.circleAction.triggered.connect(self.circleActionToggled)
+        self.paintShapeMenu.addAction(self.circleAction)
+
+        self.handAction = QAction(QIcon(":/paintshape_res/img/hand.png"), "Hand(&R)", self.paintShapeMenu)
+        self.handAction.setCheckable(True)
+        self.handAction.triggered.connect(self.handActionToggled)
+        self.paintShapeMenu.addAction(self.handAction)
+
+        self.selectAction = QAction(QIcon(":/paintshape_res/img/select.png"), "选择(&T)", self.paintShapeMenu)
+        self.selectAction.setCheckable(True)
+        self.selectAction.triggered.connect(self.selectActionToggled)
+        self.paintShapeMenu.addAction(self.selectAction)
+
+        self.deleteAction = QAction(QIcon(":/paintshape_res/img/delete.png"),"删除选中(&Delete)",self.paintShapeMenu)
+        self.deleteAction.triggered.connect(self.deleteActionTrigger)
+        self.paintShapeMenu.addAction(self.deleteAction)
 
 
         #连接contentItem的点击信号
@@ -162,27 +197,83 @@ class MainPlugin(Plugin):
 
         return MainPlugin.FREE
 
+    @pyqtSlot(bool)
+    def lineActionToggled(self, b):
+        if b:
+            for action in self.paintShapeMenu.actions():
+                action.setChecked(False)
+            self.lineAction.setChecked(True)
+        self.__drawerItem.setChecked(self.__lineContenItem,b)
+
+    @pyqtSlot(bool)
+    def arcActionToggled(self, b):
+        if b:
+            for action in self.paintShapeMenu.actions():
+                action.setChecked(False)
+            self.arcAction.setChecked(True)
+        self.__drawerItem.setChecked(self.__arcContenItem, b)
+
+    @pyqtSlot(bool)
+    def circleActionToggled(self, b):
+        if b:
+            for action in self.paintShapeMenu.actions():
+                action.setChecked(False)
+            self.circleAction.setChecked(True)
+        self.__drawerItem.setChecked(self.__circleContenItem, b)
+
+    @pyqtSlot(bool)
+    def handActionToggled(self, b):
+        if b:
+            for action in self.paintShapeMenu.actions():
+                action.setChecked(False)
+            self.handAction.setChecked(True)
+        self.__drawerItem.setChecked(self.__handContenItem, b)
+
+    @pyqtSlot(bool)
+    def selectActionToggled(self, b):
+        if b:
+            for action in self.paintShapeMenu.actions():
+                action.setChecked(False)
+            self.selectAction.setChecked(True)
+        self.__drawerItem.setChecked(self.__selectContenItem, b)
+
+    @pyqtSlot(bool)
+    def deleteActionTrigger(self):
+        #self.__drawerItem.setChecked(self.__selectContenItem, b)
+        Board = ExInterFace.getCurrentBoard()
+        for i in range(len(MainPlugin.__shapes[Board.id])-1, -1, -1):
+            if MainPlugin.__shapes[Board.id][i].selected:
+                MainPlugin.__shapes[Board.id].pop(i)
+        Board.repaint()
+
     @pyqtSlot(object, bool)
     def drawerItemChanged(self, item, checked):
         self.clearCurrentVar()
         Board = ExInterFace.getCurrentBoard()
+        for action in self.paintShapeMenu.actions():
+            action.setChecked(False)
         if checked:
             if item is self.__lineContenItem:
                 MainPlugin.__state[Board.id] = MainPlugin.PAINT_LINE
+                self.lineAction.setChecked(True)
             elif item is self.__arcContenItem:
                 MainPlugin.__state[Board.id] = MainPlugin.PAINT_ARC
+                self.arcAction.setChecked(True)
             elif item is self.__circleContenItem:
                 MainPlugin.__state[Board.id] = MainPlugin.PAINT_CIRCLE
+                self.circleAction.setChecked(True)
             elif item is self.__selectContenItem:
                 MainPlugin.__state[Board.id] = MainPlugin.SELECT
+                self.selectAction.setChecked(True)
             elif item is self.__handContenItem:
                 MainPlugin.__state[Board.id] = MainPlugin.HAND
+                self.handAction.setChecked(True)
             else:
                 raise RuntimeError("未知错误 传入了未知的值")
         else:
             MainPlugin.__state[Board.id] = MainPlugin.FREE
 
-        self.repaintSignal.emit()
+        Board.repaint()
 
     def getToolItems(self):
         return [self.__drawerItem]
@@ -217,6 +308,8 @@ class MainPlugin(Plugin):
                 MainPlugin.__assist_circle[Board.id].setVisible(True)
             elif MainPlugin.__state[Board.id] == MainPlugin.PAINTING_LINE:
                 MainPlugin.__state[Board.id] = MainPlugin.PAINT_LINE
+        elif key_value == Qt.Key_Delete:
+            self.deleteActionTrigger()
 
         if MainPlugin.__state[Board.id] == MainPlugin.PAINT_LINE:
             pass
@@ -267,6 +360,10 @@ class MainPlugin(Plugin):
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
             pass
+
+    def getMenu(self):
+        return self.paintShapeMenu
+
 
     def mouseDoubleClickEvent(self, QMouseEvent):
         Board = ExInterFace.getCurrentBoard()
@@ -462,6 +559,8 @@ class MainPlugin(Plugin):
                 if self.__hover_shape[Board.id]:
                     self.__hover_shape[Board.id].origin_shape.selected = not self.__hover_shape[
                         Board.id].origin_shape.selected
+                    if self.__hover_shape[Board.id].origin_shape.selected:
+                        self.propertyDock.updateValues(self.__hover_shape[Board.id].origin_shape)
             elif MainPlugin.__state[Board.id] == MainPlugin.HANDED:
                 MainPlugin.__state[Board.id] = MainPlugin.HAND
         elif QMouseEvent.button() == Qt.RightButton:
@@ -489,6 +588,8 @@ class MainPlugin(Plugin):
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.SELECT:
                 pass
+
+        Board.repaint()
 
     def wheelEvent(self, QWheelEvent):
 

@@ -27,10 +27,16 @@ class Plugin(QObject):
     def getDockWidgets(self):
         pass
 
+    def getMenu(self):#获取menu直接添加到menuBar
+        pass
+
     def getBoardProperty(self):#返回一个 插件会给board添加的属性字符数组 主要用来在侧边栏显示
         pass
 
     def getFileMenus(self, type):#主程序获取插件中需要添加到文件menu里的menu或者是action
+        pass
+
+    def getToolMenus(self, type):#主程序获取插件中需要添加到工具menu里的menu或者是action
         pass
 
     def getPopMenus(self):

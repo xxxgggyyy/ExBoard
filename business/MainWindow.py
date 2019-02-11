@@ -78,12 +78,16 @@ class MainWindow(QMainWindow):
                 for drawerItem in drawerItems:
                     self.drawerWdg.addDrawerItem(drawerItem)
             #挂载菜单栏按钮
-            if plugin.getFileMenus(QAction):
+            '''if plugin.getFileMenus(QAction):
                 for action in plugin.getFileMenus(QAction):
                     self.ui.file_menu.addAction(action)
             if plugin.getFileMenus(QAction):
                 for menu in plugin.getFileMenus(QMenu):
-                    self.ui.file_menu.addMenu(menu)
+                    self.ui.file_menu.addMenu(menu)'''
+            #挂载menu到menuBar
+            if plugin.getMenu():
+                self.ui.menubar.addMenu(plugin.getMenu())
+
             #挂载Board需要显示和可修改的属性列表
 
             #挂载插件设置界面控件
@@ -93,6 +97,8 @@ class MainWindow(QMainWindow):
             if plugin.getDockWidgets():
                 for dock in plugin.getDockWidgets():
                     self.addDockWidget(Qt.RightDockWidgetArea,dock)
+
+
 
             #连接信号
             #tab切换的信号

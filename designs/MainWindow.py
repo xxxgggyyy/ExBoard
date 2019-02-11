@@ -9,6 +9,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.Qt import Qt
 
+import designs.resources
+
 class BoardTabWidget(QtWidgets.QTabWidget):
 
     def __init__(self, parent=None):
@@ -16,6 +18,7 @@ class BoardTabWidget(QtWidgets.QTabWidget):
         self.setFocusPolicy(Qt.StrongFocus)
 
     def keyPressEvent(self, QKeyEvent):
+        #手动调用当前widget的keyPressEvent
         self.currentWidget().keyPressEvent(QKeyEvent)
 
 
@@ -37,11 +40,11 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1186, 26))
-        self.menubar.setStyleSheet("QMenu{background-color:#606a85;\n"
+        '''self.menubar.setStyleSheet("QMenu{background-color:#606a85;\n"
 "color:rgb(255, 255, 255)}\n"
 "QMenu::Item:selected{\n"
 "background-color:#1a7dc4\n"
-"}")
+"}")'''
         self.menubar.setObjectName("menubar")
         self.file_menu = QtWidgets.QMenu(self.menubar)
         self.file_menu.setStyleSheet("")
@@ -133,6 +136,8 @@ class Ui_MainWindow(object):
         self.file_menu.addAction(self.actionsetting)
         self.menubar.addAction(self.file_menu.menuAction())
         self.menubar.addAction(self.tool_menu.menuAction())
+
+        self.top_toolBar.addAction(self.actionnew_board)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
