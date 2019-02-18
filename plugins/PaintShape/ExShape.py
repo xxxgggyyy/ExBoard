@@ -184,15 +184,10 @@ class ExLine(ExShape):
             #绘制图形
             QPainter.drawLine(self.pt0.x*MainPlugin.unit_pixel,self.pt0.y*MainPlugin.unit_pixel,self.pt1.x*MainPlugin.unit_pixel,self.pt1.y*MainPlugin.unit_pixel)
             if self.selected:
-                dotLineInterval = 1.2
-                pen.setColor(Qt.gray)
-                pen.setStyle(Qt.DotLine)
-                pen.setWidth(2)
+                pen.setColor(Qt.red)
                 QPainter.setPen(pen)
-                QPainter.drawLine((self.pt0.x+dotLineInterval) * MainPlugin.unit_pixel, self.pt0.y * MainPlugin.unit_pixel,
-                                  (self.pt1.x+dotLineInterval) * MainPlugin.unit_pixel, self.pt1.y * MainPlugin.unit_pixel)
-                QPainter.drawLine((self.pt0.x-dotLineInterval) * MainPlugin.unit_pixel, self.pt0.y * MainPlugin.unit_pixel,
-                                  (self.pt1.x-dotLineInterval) * MainPlugin.unit_pixel, self.pt1.y * MainPlugin.unit_pixel)
+                QPainter.drawLine(self.pt0.x * MainPlugin.unit_pixel, self.pt0.y * MainPlugin.unit_pixel,
+                                  self.pt1.x * MainPlugin.unit_pixel, self.pt1.y * MainPlugin.unit_pixel)
 
             QPainter.restore()
 
@@ -508,19 +503,11 @@ class ExArc(ExShape):
                 QPainter.drawArc((self.center.x - self.r)*MainPlugin.unit_pixel,(self.center.y - self.r)*MainPlugin.unit_pixel,2*self.r*MainPlugin.unit_pixel,2*self.r*MainPlugin.unit_pixel,self.startAngle*16,self.spanAngle*16)
 
             if self.selected:
-                dotLineInterval = 1.2
-                pen.setColor(Qt.gray)
-                pen.setStyle(Qt.DotLine)
-                pen.setWidth(2)
+                pen.setColor(Qt.red)
                 QPainter.setPen(pen)
-                QPainter.drawArc((self.center.x - self.r - dotLineInterval) * MainPlugin.unit_pixel,
-                                 (self.center.y - self.r - dotLineInterval) * MainPlugin.unit_pixel, 2 * (self.r+dotLineInterval) * MainPlugin.unit_pixel,
-                                 2 * (self.r+dotLineInterval) * MainPlugin.unit_pixel, self.startAngle * 16, self.spanAngle * 16)
-                QPainter.drawArc((self.center.x - self.r + dotLineInterval) * MainPlugin.unit_pixel,
-                                 (self.center.y - self.r + dotLineInterval) * MainPlugin.unit_pixel,
-                                 2 * (self.r - dotLineInterval) * MainPlugin.unit_pixel,
-                                 2 * (self.r - dotLineInterval) * MainPlugin.unit_pixel, self.startAngle * 16,
-                                 self.spanAngle * 16)
+                QPainter.drawArc((self.center.x - self.r) * MainPlugin.unit_pixel,
+                                 (self.center.y - self.r) * MainPlugin.unit_pixel, 2 * self.r * MainPlugin.unit_pixel,
+                                 2 * self.r * MainPlugin.unit_pixel, self.startAngle * 16, self.spanAngle * 16)
 
             QPainter.restore()
 
@@ -582,14 +569,11 @@ class ExCircle(ExShape):
 
             if self.selected:
                 dotLineInterval = 1.2
-                pen.setColor(Qt.gray)
-                pen.setStyle(Qt.DotLine)
-                pen.setWidth(2)
+                pen.setColor(Qt.red)
                 QPainter.setPen(pen)
-                QPainter.drawEllipse((self.centerPt.x - self.r - dotLineInterval) * MainPlugin.unit_pixel, (self.centerPt.y - self.r - dotLineInterval) * MainPlugin.unit_pixel,
-                                 2 * (self.r+dotLineInterval) * MainPlugin.unit_pixel, 2 * (self.r+dotLineInterval) * MainPlugin.unit_pixel)
-                QPainter.drawEllipse((self.centerPt.x - self.r + dotLineInterval) * MainPlugin.unit_pixel, (self.centerPt.y - self.r + dotLineInterval) * MainPlugin.unit_pixel,
-                                 2 * (self.r-dotLineInterval) * MainPlugin.unit_pixel, 2 * (self.r-dotLineInterval) * MainPlugin.unit_pixel)
+                QPainter.drawEllipse((self.centerPt.x - self.r) * MainPlugin.unit_pixel,
+                                     (self.centerPt.y - self.r) * MainPlugin.unit_pixel,
+                                     2 * self.r * MainPlugin.unit_pixel, 2 * self.r * MainPlugin.unit_pixel)
 
             QPainter.restore()
 

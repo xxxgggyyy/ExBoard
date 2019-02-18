@@ -138,6 +138,14 @@ class MainPlugin(Plugin):
         self.deleteAction.triggered.connect(self.deleteActionTrigger)
         self.paintShapeMenu.addAction(self.deleteAction)
 
+        self.revokeAction = QAction(QIcon(":/paintshape_res/img/revoke.png"), "撤销(ctr+Z)", self.paintShapeMenu)
+        self.revokeAction.triggered.connect(self.revokeActionTrigger)
+        self.paintShapeMenu.addAction(self.revokeAction)
+
+        self.forwardAction = QAction(QIcon(":/paintshape_res/img/forward.png"), "前进(ctr+X)", self.paintShapeMenu)
+        self.forwardAction.triggered.connect(self.forwardActionTrigger)
+        self.paintShapeMenu.addAction(self.forwardAction)
+
 
         #连接contentItem的点击信号
         for item in self.__allContentItem:
@@ -163,6 +171,9 @@ class MainPlugin(Plugin):
 
         #调用接口设置
         ExInterFace.setBackgroundColor(MainPlugin.background_color)
+
+    def getTopToolBarActions(self):
+        return [self.revokeAction, self.forwardAction]
 
     @staticmethod
     def saveSetting():#保存到配置文件中
@@ -245,6 +256,14 @@ class MainPlugin(Plugin):
             if MainPlugin.__shapes[Board.id][i].selected:
                 MainPlugin.__shapes[Board.id].pop(i)
         Board.repaint()
+
+    @pyqtSlot(bool)
+    def revokeActionTrigger(self):
+        pass
+
+    @pyqtSlot(bool)
+    def forwardActionTrigger(self):
+        pass
 
     @pyqtSlot(object, bool)
     def drawerItemChanged(self, item, checked):
@@ -556,11 +575,11 @@ class MainPlugin(Plugin):
             elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.SELECT:
+                if not QMouseEvent.modifiers() == Qt.ControlModifier:
+                    self.cancelAllSelected()
                 if self.__hover_shape[Board.id]:
-                    self.__hover_shape[Board.id].origin_shape.selected = not self.__hover_shape[
-                        Board.id].origin_shape.selected
-                    if self.__hover_shape[Board.id].origin_shape.selected:
-                        self.propertyDock.updateValues(self.__hover_shape[Board.id].origin_shape)
+                    self.__hover_shape[Board.id].origin_shape.selected = True
+                    self.propertyDock.updateValues(self.__hover_shape[Board.id].origin_shape)
             elif MainPlugin.__state[Board.id] == MainPlugin.HANDED:
                 MainPlugin.__state[Board.id] = MainPlugin.HAND
         elif QMouseEvent.button() == Qt.RightButton:
@@ -590,6 +609,11 @@ class MainPlugin(Plugin):
                 pass
 
         Board.repaint()
+
+    def cancelAllSelected(self):
+        Board = ExInterFace.getCurrentBoard()
+        for shape in MainPlugin.__shapes[Board.id]:
+            shape.selected = False
 
     def wheelEvent(self, QWheelEvent):
 
@@ -667,6 +691,7 @@ class MainPlugin(Plugin):
                 MainPlugin.__hover_shape[Board.id] = copy.deepcopy(shape)
                 MainPlugin.__hover_shape[Board.id].origin_shape = shape
                 MainPlugin.__hover_shape[Board.id].setColor(Qt.green)
+                MainPlugin.__hover_shape[Board.id].selected = False
                 return True
         MainPlugin.__hover_shape[Board.id] = None
 
@@ -749,17 +774,6 @@ class MainPlugin(Plugin):
             if MainPlugin.__painting_shape[Board.id]:
                 MainPlugin.__painting_shape[Board.id].draw(painter, MainPlugin)
 
-        #绘制悬停对象
-        if MainPlugin.__hover_point[Board.id]:
-            MainPlugin.__hover_point[Board.id].draw(painter, MainPlugin)
-
-        if MainPlugin.__hover_shape[Board.id]:
-            MainPlugin.__hover_shape[Board.id].draw(painter, MainPlugin)
-
-
-
-
-
         if MainPlugin.__state[Board.id] == MainPlugin.PAINT_LINE:
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.PAINT_CIRCLE:
@@ -789,6 +803,12 @@ class MainPlugin(Plugin):
         elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
             pass
 
+        # 绘制悬停对象
+        if MainPlugin.__hover_point[Board.id]:
+            MainPlugin.__hover_point[Board.id].draw(painter, MainPlugin)
+
+        if MainPlugin.__hover_shape[Board.id]:
+            MainPlugin.__hover_shape[Board.id].draw(painter, MainPlugin)
 
         # 绘制 匹配到的虚线
         vLine = None

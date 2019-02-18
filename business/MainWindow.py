@@ -29,8 +29,9 @@ class MainWindow(QMainWindow):
         self.taskProgress.setStyleSheet('QProgressBar{border:2px solid grey;border-radius:5px;text-align:center;}QProgressBar::chunk{background-color:#05B8CC;width:20px;}')
         self.taskProgress.setMaximum(100)
         self.taskProgress.setMinimum(0)
+        self.taskProgress.setValue(60)
         self.taskProgress.setMaximumWidth(200)
-        self.taskProgress.setVisible(False)
+        self.taskProgress.setVisible(True)
         self.ui.statusbar.addWidget(self.taskName)
         self.ui.statusbar.addWidget(self.taskProgress)
 
@@ -89,6 +90,11 @@ class MainWindow(QMainWindow):
                 self.ui.menubar.addMenu(plugin.getMenu())
 
             #挂载Board需要显示和可修改的属性列表
+
+            #挂载顶部通栏Action
+            if plugin.getTopToolBarActions():
+                for action in plugin.getTopToolBarActions():
+                    self.ui.top_toolBar.addAction(action)
 
             #挂载插件设置界面控件
             self.settingDialog.addPluginSetting(plugin.getPluginName(), plugin.getPluginSettingWidget())

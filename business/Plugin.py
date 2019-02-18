@@ -39,6 +39,9 @@ class Plugin(QObject):
     def getToolMenus(self, type):#主程序获取插件中需要添加到工具menu里的menu或者是action
         pass
 
+    def getTopToolBarActions(self):
+        pass
+
     def getPopMenus(self):
         pass
 
