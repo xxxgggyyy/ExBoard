@@ -3,6 +3,154 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
+class ShapePropertyTableItem:
+
+    def __init__(self):
+        self.shape = None
+        self.proName = None
+
+    def setShape(self, shape, proName):
+        self.shape = shape
+        self.proName = proName
+
+    def setValue(self, value):
+        pass
+
+    def getValue(self):
+        pass
+
+
+class NumEditItem(QDoubleSpinBox,ShapePropertyTableItem):
+
+    def __init__(self):
+        super().__init__()
+        self.valueChanged.connect(self.valueChangedSlot)
+
+    @pyqtSlot(float)
+    def valueChangedSlot(self, value):
+        if self.shape and self.proName:
+            setattr(self.shape, self.proName, self.getValue())  # 为shape赋值
+
+    def getValue(self):
+        return self.value()
+
+class ExPointItem(QLineEdit, ShapePropertyTableItem):
+
+    def __init__(self):
+        super().__init__()
+        #连接自身的信号
+        self.textEdited.connect(self.valueChanged)
+        self.oriValue = None
+
+    def setValue(self, value):
+        from .ExShape import ExPoint#防止交叉引用
+        if isinstance(value, ExPoint):
+            self.oriValue = "%.2f,%.2f" % (value.x,value.y)
+            self.setText(self.oriValue)
+
+    def getValue(self):
+        from .ExShape import ExPoint
+        try:
+            text = self.text()
+            text.index(",")
+            values = text.split(",")
+            if len(values) != 2:
+                raise ValueError("只要两个数")
+            value = ExPoint(float(values[0]), float(values[1]))
+            self.oriValue = "%.2f,%.2f" % (value.x, value.y)
+            return value
+        except ValueError as e:
+            # 没有找到',' 或者其他格式错误 不修改 直接赋予原值
+            raise e
+
+
+    @pyqtSlot(str)
+    def valueChanged(self, text):
+        try:
+            if self.shape and self.proName:
+                setattr(self.shape, self.proName, self.getValue())  # 为shape赋值
+        except ValueError as e:
+            #没有找到',' 或者其他格式错误 不修改 直接赋予原值
+            self.setText(self.oriValue)
+
+class QColorItem(QLineEdit, ShapePropertyTableItem):
+
+    def __init__(self):
+        super().__init__()
+        #连接自身的信号
+        self.textEdited.connect(self.valueChanged)
+        self.oriValue = None
+
+
+    def setValue(self, value):
+        if isinstance(value, QColor):
+            self.oriValue = "%d,%d,%d" % (value.red(),value.green(),value.blue())
+            self.setText(self.oriValue)
+
+    def getValue(self):
+        try:
+            text = self.text()
+            values = text.split(",")
+            if len(values) != 3:
+                raise ValueError("只要三个数")
+            r = float(values[0])
+            g = float(values[1])
+            b = float(values[2])
+            if r<0 or r>255 or g<0 or g>255 or b<0 or b>255:
+                raise ValueError("超出颜色值的范围")
+            value = QColor(r, g, b)
+            self.oriValue = "%d,%d,%d" % (r, g, b)
+            return value
+        except ValueError as e:
+            # 没有找到',' 或者其他格式错误 不修改 直接赋予原值
+            raise e
+
+
+    @pyqtSlot(str)
+    def valueChanged(self, text):
+        try:
+            if self.shape and self.proName:
+                setattr(self.shape, self.proName, self.getValue())  # 为shape赋值
+        except ValueError as e:
+            #没有找到',' 或者其他格式错误 不修改 直接赋予原值
+            self.setText(self.oriValue)
+
+
+
+class BoolComboBox(QComboBox, ShapePropertyTableItem):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.addItem("True", None)
+        self.addItem("False", None)
+
+        #连接自身的信号
+        self.currentIndexChanged.connect(self.currentIndexChangedSlot)
+
+
+    @pyqtSlot(int)
+    def currentIndexChangedSlot(self, index):
+        if self.shape and self.proName:
+            setattr(self.shape, self.proName, self.getValue())
+
+    def setShape(self, shape, proName):
+        self.shape = shape
+        self.proName = proName
+
+    def setValue(self, b):
+        if b:
+            self.setCurrentIndex(0)
+        else:
+            self.setCurrentIndex(1)
+
+    def getValue(self):
+        if self.currentIndex()==0:
+            return True
+        else:
+            return False
+
+
+
 
 class ShapePropertyDockWidget(QDockWidget):
 
@@ -65,11 +213,9 @@ class ShapePropertyDockWidget(QDockWidget):
             else:
                 self.shapePropertyTable.setCellWidget(i, 1, valueItem)
 
-            if propertyList[i]['type'] == QColor:
-                color = getattr(self.currentShape, propertyList[i]['proName'])
-                valueItem.setText(str(color.red())+","+str(color.green())+","+str(color.blue()))
-            elif propertyList[i]['type'] == bool:
-                valueItem.setText(str(getattr(self.currentShape, propertyList[i]['proName'])))
+            if isinstance(valueItem, ShapePropertyTableItem):
+                valueItem.setShape(self.currentShape, propertyList[i]['proName'])
+                valueItem.setValue(getattr(self.currentShape, propertyList[i]['proName']))
 
 
 

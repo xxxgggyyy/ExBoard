@@ -3,11 +3,9 @@ from PyQt5.QtCore import *
 from PyQt5.Qt import Qt
 
 import math
+from .ShapePropertyDockWidget import BoolComboBox, ExPointItem, NumEditItem, QColorItem
 
 class ExShape:
-
-    changeable_properties = [{'proName':'color','name':"颜色",'itemWdg':None,'type':QColor}, {'proName':'selected','name':"选中",'itemWdg':None,'type':bool},
-                             {'proName': 'visible', 'name': "可见", 'itemWdg': None, 'type': bool}]
 
 
     def __init__(self):
@@ -55,7 +53,9 @@ class ExShape:
         pass
 
     def getPropertiesList(self):
-        return ExShape.changeable_properties
+        #直接返回因为在qtablewidget中调用clearContens 会销毁itemWdg所以需要每次重新生成
+        return [{'proName':'color','name':"颜色",'itemWdg':QColorItem(),'type':QColor}, {'proName':'selected','name':"选中",'itemWdg':BoolComboBox(),'type':bool},
+                             {'proName': 'visible', 'name': "可见", 'itemWdg': BoolComboBox(), 'type': bool}]
 
     def changeValueByPropertiesList(self, index, value):
         propertyDict = self.getPropertiesList()[index]
@@ -113,6 +113,10 @@ class ExPoint(ExShape):
 
 
 class ExLine(ExShape):
+
+    def getPropertiesList(self):
+        return super().getPropertiesList()+[{'proName':'pt0','name':"起始点",'itemWdg':ExPointItem(),'type':ExPoint},
+                                            {'proName': 'pt1', 'name': "结束点", 'itemWdg': ExPointItem(), 'type': ExPoint}]
 
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -182,7 +186,8 @@ class ExLine(ExShape):
             QPainter.setPen(pen)
 
             #绘制图形
-            QPainter.drawLine(self.pt0.x*MainPlugin.unit_pixel,self.pt0.y*MainPlugin.unit_pixel,self.pt1.x*MainPlugin.unit_pixel,self.pt1.y*MainPlugin.unit_pixel)
+            if self.pt1.x!=None and self.pt1.y!=None  and self.pt0.x!=None and self.pt0.y!=None:
+                QPainter.drawLine(self.pt0.x*MainPlugin.unit_pixel,self.pt0.y*MainPlugin.unit_pixel,self.pt1.x*MainPlugin.unit_pixel,self.pt1.y*MainPlugin.unit_pixel)
             if self.selected:
                 pen.setColor(Qt.red)
                 QPainter.setPen(pen)
@@ -304,6 +309,20 @@ class ExLine(ExShape):
 
 class ExArc(ExShape):
     '''角度的单位为度'''
+
+    def getPropertiesList(self):
+        #辅助封装的double spin控件 要设置一下取值范围
+        startAngleItemWdg = NumEditItem()
+        startAngleItemWdg.setMaximum(360)
+        startAngleItemWdg.setMinimum(0)
+
+        spanAngleItemWdg = NumEditItem()
+        spanAngleItemWdg.setMaximum(360)
+        spanAngleItemWdg.setMinimum(0)
+        return super().getPropertiesList()+[{'proName': 'center', 'name': "中心点", 'itemWdg': ExPointItem(), 'type': ExPoint},
+                                            {'proName': 'r', 'name': "半径", 'itemWdg': NumEditItem(),'type': float},
+                                            {'proName': 'startAngle', 'name': "起始角度", 'itemWdg': startAngleItemWdg, 'type': float},
+                                            {'proName': 'spanAngle', 'name': "角度范围", 'itemWdg': spanAngleItemWdg,'type': float}]
 
     def __init__(self, *args):
         super().__init__()
@@ -499,7 +518,7 @@ class ExArc(ExShape):
             pen.setCapStyle(Qt.RoundCap)
             QPainter.setPen(pen)
             # 绘制图形
-            if self.startAngle!=None and self.spanAngle!=None and self.r != None:
+            if self.startAngle!=None and self.spanAngle!=None and self.r != None and self.center.x!=None and self.center.y!=None:
                 QPainter.drawArc((self.center.x - self.r)*MainPlugin.unit_pixel,(self.center.y - self.r)*MainPlugin.unit_pixel,2*self.r*MainPlugin.unit_pixel,2*self.r*MainPlugin.unit_pixel,self.startAngle*16,self.spanAngle*16)
 
             if self.selected:
@@ -514,6 +533,10 @@ class ExArc(ExShape):
 
 
 class ExCircle(ExShape):
+
+    def getPropertiesList(self):
+        return super().getPropertiesList()+[{'proName': 'centerPt', 'name': "中心点", 'itemWdg': ExPointItem(), 'type': ExPoint},
+                                            {'proName': 'r', 'name': "半径", 'itemWdg': NumEditItem(),'type': float}]
 
     def __init__(self,*args):
         super().__init__()

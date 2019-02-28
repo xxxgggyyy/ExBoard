@@ -105,6 +105,7 @@ class MainPlugin(Plugin):
 
         #创建属性dockwidget
         self.propertyDock = ShapePropertyDockWidget("图形属性")
+        self.propertyDock.setMinimumWidth(300)
 
         #菜单
         self.paintShapeMenu = QMenu("绘图")
@@ -146,6 +147,9 @@ class MainPlugin(Plugin):
         self.forwardAction.triggered.connect(self.forwardActionTrigger)
         self.paintShapeMenu.addAction(self.forwardAction)
 
+        self.showPropertyDockAction = QAction(QIcon(":/paintshape_res/img/show.png"), "显示属性窗口", self.paintShapeMenu)
+        self.showPropertyDockAction.triggered.connect(self.propertyDock.show)
+        self.paintShapeMenu.addAction(self.showPropertyDockAction)
 
         #连接contentItem的点击信号
         for item in self.__allContentItem:
@@ -514,6 +518,14 @@ class MainPlugin(Plugin):
                 MainPlugin.__hand_start_pt[Board.id].x = QMouseEvent.pos().x()#这里使用Boadr坐标没有转换后的，移动就必须要一个原点固定的坐标系
                 MainPlugin.__hand_start_pt[Board.id].y = QMouseEvent.pos().y()
                 MainPlugin.__state[Board.id] = MainPlugin.HANDED
+            elif MainPlugin.__state[Board.id] == MainPlugin.SELECT:
+                if not QMouseEvent.modifiers() == Qt.ControlModifier:#没有按下ctr
+                    self.cancelAllSelected()
+                if self.__hover_shape[Board.id]:
+                    self.__hover_shape[Board.id].origin_shape.selected = True
+                    self.propertyDock.updateValues(self.__hover_shape[Board.id].origin_shape)
+                else:
+                    self.propertyDock.clearAll()
 
     def mouseReleaseEvent(self, QMouseEvent):
 
@@ -575,11 +587,7 @@ class MainPlugin(Plugin):
             elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.SELECT:
-                if not QMouseEvent.modifiers() == Qt.ControlModifier:
-                    self.cancelAllSelected()
-                if self.__hover_shape[Board.id]:
-                    self.__hover_shape[Board.id].origin_shape.selected = True
-                    self.propertyDock.updateValues(self.__hover_shape[Board.id].origin_shape)
+                pass
             elif MainPlugin.__state[Board.id] == MainPlugin.HANDED:
                 MainPlugin.__state[Board.id] = MainPlugin.HAND
         elif QMouseEvent.button() == Qt.RightButton:
