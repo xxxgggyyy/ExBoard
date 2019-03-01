@@ -41,15 +41,15 @@ class MainPlugin(Plugin):
     PAINTING_ARC1 = 6
     PAINTING_CIRCLE = 7
 
-    SELECT = 8
-    HAND = 9
-    HANDED = 10
+    MOVING_SHAPE = 8
 
-    MOVING_LINE = 11
-    MOVING_ARC = 12
-    MOVING_CIRCLE = 13
+    SELECT = 9
+    HAND = 10
+    HANDED = 11
 
-    MOVING_BOARD = 14
+
+
+    MOVING_BOARD = 12
 
     __origin_position = {}#原点坐标
 
@@ -74,6 +74,8 @@ class MainPlugin(Plugin):
     __assist_line = {}#绘制圆弧时的辅助虚线
 
     __hand_start_pt = {}#hand按下时的点
+
+    __changing_pt = {}
 
     __origin_cross = ExOriginCross()
 
@@ -348,12 +350,6 @@ class MainPlugin(Plugin):
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
             pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_ARC:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_LINE:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_CIRCLE:
-            pass
         elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
             pass
 
@@ -374,12 +370,6 @@ class MainPlugin(Plugin):
         elif MainPlugin.__state[Board.id] == MainPlugin.PAINTING_LINE:
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_ARC:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_LINE:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_CIRCLE:
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
             pass
@@ -404,12 +394,6 @@ class MainPlugin(Plugin):
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
             pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_ARC:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_LINE:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_CIRCLE:
-            pass
         elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
             pass
 
@@ -421,16 +405,15 @@ class MainPlugin(Plugin):
 
         # 检查 并设置悬停
 
+        # 只有在选中模式下 才有shape的hover
+        if MainPlugin.__state[Board.id] == MainPlugin.SELECT:
+            self.checkHoverShape(mousePos, Board)
+
         #在绘制，绘制中，选中 都可以有 hover点和匹配
-        if MainPlugin.__state[Board.id] <= MainPlugin.SELECT:
-            if not self.checkHoverPoint(mousePos, Board):
-
-                # 只有在选中模式下 才有shape的hover
-                if MainPlugin.__state[Board.id] == MainPlugin.SELECT:
-                    self.checkHoverShape(mousePos, Board)
-
-                if MainPlugin.__state[Board.id] < MainPlugin.SELECT:
-                    self.checkMatch(mousePos, Board)
+        # 原则是点到点 就不会点到shape
+        if MainPlugin.__state[Board.id] < MainPlugin.SELECT:
+            self.checkHoverPoint(mousePos, Board)
+            self.checkMatch(mousePos, Board)
 
         #一定要在上面代码的后面
         matchedPt = self.getMatchedPoint(mousePos, Board)
@@ -467,12 +450,6 @@ class MainPlugin(Plugin):
                 MainPlugin.__painting_shape[Board.id].setPt1(matchedPt.x, matchedPt.y)
         elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
             pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_ARC:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_LINE:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_CIRCLE:
-            pass
         elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.HANDED:
@@ -480,6 +457,15 @@ class MainPlugin(Plugin):
             MainPlugin.__origin_position[Board.id].y -= (QMouseEvent.pos().y() - MainPlugin.__hand_start_pt[Board.id].y)/ MainPlugin.unit_pixel
             MainPlugin.__hand_start_pt[Board.id].x = QMouseEvent.pos().x()
             MainPlugin.__hand_start_pt[Board.id].y = QMouseEvent.pos().y()
+        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_SHAPE:
+            #直接修改 hover_pt的值
+            MainPlugin.__changing_pt[Board.id].x = matchedPt.x
+            MainPlugin.__changing_pt[Board.id].y = matchedPt.y
+
+            if not MainPlugin.__changing_pt[Board.id].parent.calculate():#需要间接计算一下
+                MainPlugin.__changing_pt[Board.id].parent.setVisible(False)
+            else:
+                MainPlugin.__changing_pt[Board.id].parent.setVisible(True)
 
         Board.repaint()
 
@@ -504,12 +490,6 @@ class MainPlugin(Plugin):
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
                 pass
-            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_ARC:
-                pass
-            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_LINE:
-                pass
-            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_CIRCLE:
-                pass
             elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.HAND:
@@ -519,13 +499,22 @@ class MainPlugin(Plugin):
                 MainPlugin.__hand_start_pt[Board.id].y = QMouseEvent.pos().y()
                 MainPlugin.__state[Board.id] = MainPlugin.HANDED
             elif MainPlugin.__state[Board.id] == MainPlugin.SELECT:
-                if not QMouseEvent.modifiers() == Qt.ControlModifier:#没有按下ctr
-                    self.cancelAllSelected()
-                if self.__hover_shape[Board.id]:
-                    self.__hover_shape[Board.id].origin_shape.selected = True
-                    self.propertyDock.updateValues(self.__hover_shape[Board.id].origin_shape)
+                pt = self.getPressPoint(mousePos)#查找是否点击到点上
+                if pt and pt.parent == self.getSelectShape():
+                    #如果点到了点且是当前选中的点 就开始准备移动
+                    MainPlugin.__state[Board.id] = MainPlugin.MOVING_SHAPE
+                    MainPlugin.__changing_pt[Board.id] = pt
                 else:
-                    self.propertyDock.clearAll()
+                    if not QMouseEvent.modifiers() == Qt.ControlModifier:#没有按下ctr 清空所有的选择
+                        self.cancelAllSelected()
+                    if MainPlugin.__hover_shape[Board.id]:#有点到 图形上
+                        MainPlugin.__hover_shape[Board.id].origin_shape.selected = True
+                        self.propertyDock.updateValues(MainPlugin.__hover_shape[Board.id].origin_shape)
+                    else:
+                        self.propertyDock.clearAll()
+                    
+
+        Board.repaint()
 
     def mouseReleaseEvent(self, QMouseEvent):
 
@@ -578,18 +567,15 @@ class MainPlugin(Plugin):
                 MainPlugin.__state[Board.id] = MainPlugin.PAINT_LINE
             elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
                 pass
-            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_ARC:
-                pass
-            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_LINE:
-                pass
-            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_CIRCLE:
-                pass
             elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.SELECT:
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.HANDED:
                 MainPlugin.__state[Board.id] = MainPlugin.HAND
+            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_SHAPE:
+                MainPlugin.__state[Board.id] = MainPlugin.SELECT#鼠标松开 返回到选择状态
+                MainPlugin.__hover_shape[Board.id] = None
         elif QMouseEvent.button() == Qt.RightButton:
             if MainPlugin.__state[Board.id] == MainPlugin.PAINT_LINE:
                 pass
@@ -604,12 +590,6 @@ class MainPlugin(Plugin):
             elif MainPlugin.__state[Board.id] == MainPlugin.PAINTING_LINE:
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
-                pass
-            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_ARC:
-                pass
-            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_LINE:
-                pass
-            elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_CIRCLE:
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
                 pass
@@ -649,12 +629,6 @@ class MainPlugin(Plugin):
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
             pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_ARC:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_LINE:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_CIRCLE:
-            pass
         elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.SELECT:
@@ -676,15 +650,37 @@ class MainPlugin(Plugin):
         re.y /= MainPlugin.__scale[Board.id]
         return re
 
-    def checkHoverPoint(self, mousePt, Board):
+    def getPressPoint(self, mousePt):#主要是用于获取 点击的点 来拉动修改图形 为了和checkHoverPoint解耦
         allPoints = []
+        Board = ExInterFace.getCurrentBoard()
         # 生成所有的点列表
         for shape in MainPlugin.__shapes[Board.id]:
             allPoints += shape.getPoints()
         # 检查是否悬停到点上了
         for pt in allPoints:
             if pt.isPointNearShape(mousePt, 2.5, MainPlugin):
+                return pt
+        return None
+
+    def getSelectShape(self):
+        Board = ExInterFace.getCurrentBoard()
+        for shape in MainPlugin.__shapes[Board.id]:
+            if shape.selected:
+                return shape
+        return None
+
+    def checkHoverPoint(self, mousePt, Board):
+        allPoints = []
+        # 生成所有的点列表
+        for shape in MainPlugin.__shapes[Board.id]:
+            allPoints += shape.getPoints()
+        if MainPlugin.__state[Board.id] == MainPlugin.MOVING_SHAPE:
+            allPoints.remove(MainPlugin.__changing_pt[Board.id])#在移动的时候自身 就不要匹配了 这里很耦合 之后优化的时候应该考虑解耦
+        # 检查是否悬停到点上了
+        for pt in allPoints:
+            if pt.isPointNearShape(mousePt, 2.5, MainPlugin):
                 MainPlugin.__hover_point[Board.id] = CirclePoint(pt)
+                #MainPlugin.__hover_point[Board.id].orgpt = pt  # 将这个point设置一下 方便一会儿的拖动修改图形
                 MainPlugin.__hover_shape[Board.id] = None
                 return True
         # 没有检测到 设置为None
@@ -712,6 +708,8 @@ class MainPlugin(Plugin):
         for shape in MainPlugin.__shapes[Board.id]:
             allPoints += shape.getPoints()
 
+        if MainPlugin.__state[Board.id] == MainPlugin.MOVING_SHAPE:
+            allPoints.remove(MainPlugin.__changing_pt[Board.id])#在移动的时候自身 就不要匹配了 这里很耦合 之后优化的时候应该考虑解耦
 
         if MainPlugin.__painting_shape[Board.id]:#在把正在绘制的线的初始点给加上
             if isinstance(MainPlugin.__painting_shape[Board.id], ExLine):
@@ -802,35 +800,30 @@ class MainPlugin(Plugin):
             pass
         elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
             pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_ARC:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_LINE:
-            pass
-        elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_CIRCLE:
-            pass
         elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
             pass
 
         # 绘制悬停对象
-        if MainPlugin.__hover_point[Board.id]:
-            MainPlugin.__hover_point[Board.id].draw(painter, MainPlugin)
+        if MainPlugin.__state[Board.id] >= MainPlugin.PAINTING_LINE and MainPlugin.__state[Board.id]<= MainPlugin.PAINTING_CIRCLE:
+            if MainPlugin.__hover_point[Board.id]:
+                MainPlugin.__hover_point[Board.id].draw(painter, MainPlugin)
 
-        if MainPlugin.__hover_shape[Board.id]:
-            MainPlugin.__hover_shape[Board.id].draw(painter, MainPlugin)
+        if MainPlugin.__state[Board.id] == MainPlugin.SELECT:
+            if MainPlugin.__hover_shape[Board.id]:
+                MainPlugin.__hover_shape[Board.id].draw(painter, MainPlugin)
 
-        # 绘制 匹配到的虚线
-        vLine = None
-        hLine = None
-        if MainPlugin.__matched_x[Board.id]:
-            vLine = FreeLine(MainPlugin.__matched_x[Board.id], 0, MainPlugin.__matched_x[Board.id], Board.height())
-        if MainPlugin.__matched_y[Board.id]:
-            hLine = FreeLine(0, MainPlugin.__matched_y[Board.id], Board.width(), MainPlugin.__matched_y[Board.id])
-        if vLine:
-            vLine.draw(painter, MainPlugin)
-        if hLine:
-            hLine.draw(painter, MainPlugin)
-
-
+        if MainPlugin.__state[Board.id]>=MainPlugin.PAINTING_LINE and MainPlugin.__state[Board.id]<=MainPlugin.MOVING_SHAPE:
+            # 绘制 匹配到的虚线
+            vLine = None
+            hLine = None
+            if MainPlugin.__matched_x[Board.id]:
+                vLine = FreeLine(MainPlugin.__matched_x[Board.id], 0, MainPlugin.__matched_x[Board.id], Board.height())
+            if MainPlugin.__matched_y[Board.id]:
+                hLine = FreeLine(0, MainPlugin.__matched_y[Board.id], Board.width(), MainPlugin.__matched_y[Board.id])
+            if vLine:
+                vLine.draw(painter, MainPlugin)
+            if hLine:
+                hLine.draw(painter, MainPlugin)
 
 
     def clearCurrentVar(self):#当状态产生切换时 一些临时的变量 需要清理
@@ -854,6 +847,7 @@ class MainPlugin(Plugin):
         MainPlugin.__origin_position[Board.id] = ExPoint(0, 0)
         MainPlugin.__scale[Board.id] = 1
         MainPlugin.__assist_line[Board.id] = None
+        MainPlugin.__changing_pt[Board.id] = None
         MainPlugin.__hand_start_pt[Board.id] = ExPoint()
         
     @pyqtSlot(int)

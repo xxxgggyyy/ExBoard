@@ -62,6 +62,9 @@ class ExShape:
         if propertyDict["type"] == bool:
             pass
 
+    def calculate(self):#用于有些图形 需要通过间接的计算出来
+        return True
+
 
 class ExPoint(ExShape):
 
@@ -72,6 +75,7 @@ class ExPoint(ExShape):
 
     def __init__(self, *args, **kwargs):
         super().__init__()
+        self.parent = None
         self.x = None
         self.y = None
         if not kwargs:
@@ -158,6 +162,8 @@ class ExLine(ExShape):
             raise TypeError("参数不正确")
 
     def getPoints(self):
+        self.pt0.parent = self
+        self.pt1.parent = self
         return [self.pt0, self.pt1]
 
     def setPt0(self,*args):
@@ -193,6 +199,13 @@ class ExLine(ExShape):
                 QPainter.setPen(pen)
                 QPainter.drawLine(self.pt0.x * MainPlugin.unit_pixel, self.pt0.y * MainPlugin.unit_pixel,
                                   self.pt1.x * MainPlugin.unit_pixel, self.pt1.y * MainPlugin.unit_pixel)
+                #两个临时圆点 用来显示可以拉动修改的点
+                c0 = CirclePoint(self.pt0)
+                c1 = CirclePoint(self.pt1)
+                c0.setColor(QColor(Qt.yellow))
+                c1.setColor(QColor(Qt.yellow))
+                c0.draw(QPainter,MainPlugin)
+                c1.draw(QPainter,MainPlugin)
 
             QPainter.restore()
 
@@ -319,8 +332,13 @@ class ExArc(ExShape):
         spanAngleItemWdg = NumEditItem()
         spanAngleItemWdg.setMaximum(360)
         spanAngleItemWdg.setMinimum(0)
+
+        radius = NumEditItem()
+        radius.setMaximum(1000)
+        radius.setMinimum(0)
+
         return super().getPropertiesList()+[{'proName': 'center', 'name': "中心点", 'itemWdg': ExPointItem(), 'type': ExPoint},
-                                            {'proName': 'r', 'name': "半径", 'itemWdg': NumEditItem(),'type': float},
+                                            {'proName': 'r', 'name': "半径", 'itemWdg': radius,'type': float},
                                             {'proName': 'startAngle', 'name': "起始角度", 'itemWdg': startAngleItemWdg, 'type': float},
                                             {'proName': 'spanAngle', 'name': "角度范围", 'itemWdg': spanAngleItemWdg,'type': float}]
 
@@ -470,6 +488,9 @@ class ExArc(ExShape):
 
     def getPoints(self):
         if self.pt0 and self.pt1 and self.pt2:
+            self.pt0.parent = self
+            #self.pt1.parent = self
+            self.pt2.parent = self
             return [self.pt0, self.pt2]
         else:
             return []
@@ -527,6 +548,13 @@ class ExArc(ExShape):
                 QPainter.drawArc((self.center.x - self.r) * MainPlugin.unit_pixel,
                                  (self.center.y - self.r) * MainPlugin.unit_pixel, 2 * self.r * MainPlugin.unit_pixel,
                                  2 * self.r * MainPlugin.unit_pixel, self.startAngle * 16, self.spanAngle * 16)
+                # 两个临时圆点 用来显示可以拉动修改的点
+                c0 = CirclePoint(self.pt0)
+                c1 = CirclePoint(self.pt2)
+                c0.setColor(QColor(Qt.yellow))
+                c1.setColor(QColor(Qt.yellow))
+                c0.draw(QPainter, MainPlugin)
+                c1.draw(QPainter, MainPlugin)
 
             QPainter.restore()
 
@@ -535,8 +563,11 @@ class ExArc(ExShape):
 class ExCircle(ExShape):
 
     def getPropertiesList(self):
+        radius = NumEditItem()
+        radius.setMaximum(1000)
+        radius.setMinimum(0)
         return super().getPropertiesList()+[{'proName': 'centerPt', 'name': "中心点", 'itemWdg': ExPointItem(), 'type': ExPoint},
-                                            {'proName': 'r', 'name': "半径", 'itemWdg': NumEditItem(),'type': float}]
+                                            {'proName': 'r', 'name': "半径", 'itemWdg': radius,'type': float}]
 
     def __init__(self,*args):
         super().__init__()
@@ -577,6 +608,7 @@ class ExCircle(ExShape):
 
 
     def getPoints(self):
+        self.centerPt.parent = self
         return [self.centerPt]
 
     def draw(self, QPainter, MainPlugin):
@@ -598,6 +630,11 @@ class ExCircle(ExShape):
                                      (self.centerPt.y - self.r) * MainPlugin.unit_pixel,
                                      2 * self.r * MainPlugin.unit_pixel, 2 * self.r * MainPlugin.unit_pixel)
 
+                # 两个临时圆点 用来显示可以拉动修改的点
+                c0 = CirclePoint(self.centerPt)
+                c0.setColor(QColor(Qt.yellow))
+                c0.draw(QPainter, MainPlugin)
+
             QPainter.restore()
 
 #下面是一些 特殊图形 不是表示数据的图形 比如 坐标系的十字箭头等
@@ -611,15 +648,11 @@ class CirclePoint(ExPoint):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.r = 2
-        self.state = CirclePoint.HOVER
+        self.color = QColor(Qt.green)
 
     def draw(self, QPainter, MainPlugin):
         if self.visible:
             QPainter.save()
-            if self.state == CirclePoint.HOVER:
-                self.setColor(Qt.green)
-            elif self.state == CirclePoint.PRESSED:
-                self.setColor(Qt.red)
             pen = QPen()
             pen.setColor(self.color)
             pen.setWidth(MainPlugin.line_width)
