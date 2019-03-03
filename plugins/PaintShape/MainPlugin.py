@@ -500,8 +500,9 @@ class MainPlugin(Plugin):
                 MainPlugin.__state[Board.id] = MainPlugin.HANDED
             elif MainPlugin.__state[Board.id] == MainPlugin.SELECT:
                 pt = self.getPressPoint(mousePos)#查找是否点击到点上
-                if pt and pt.parent == self.getSelectShape():
-                    #如果点到了点且是当前选中的点 就开始准备移动
+                selectedShapes = self.getSelectShapes()
+                if pt and len(selectedShapes)==1 and pt.parent == selectedShapes[0]:
+                    # 如果点到了点且是当前选中的点 就开始准备移动
                     MainPlugin.__state[Board.id] = MainPlugin.MOVING_SHAPE
                     MainPlugin.__changing_pt[Board.id] = pt
                 else:
@@ -658,16 +659,17 @@ class MainPlugin(Plugin):
             allPoints += shape.getPoints()
         # 检查是否悬停到点上了
         for pt in allPoints:
-            if pt.isPointNearShape(mousePt, 2.5, MainPlugin):
+            if pt.isPointNearShape(mousePt, 2.5, MainPlugin) and pt.parent.selected:
                 return pt
         return None
 
-    def getSelectShape(self):
+    def getSelectShapes(self):
         Board = ExInterFace.getCurrentBoard()
+        result = []
         for shape in MainPlugin.__shapes[Board.id]:
             if shape.selected:
-                return shape
-        return None
+                result.append(shape)
+        return result
 
     def checkHoverPoint(self, mousePt, Board):
         allPoints = []
@@ -803,16 +805,16 @@ class MainPlugin(Plugin):
         elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
             pass
 
-        # 绘制悬停对象
-        if MainPlugin.__state[Board.id] >= MainPlugin.PAINTING_LINE and MainPlugin.__state[Board.id]<= MainPlugin.PAINTING_CIRCLE:
-            if MainPlugin.__hover_point[Board.id]:
-                MainPlugin.__hover_point[Board.id].draw(painter, MainPlugin)
-
         if MainPlugin.__state[Board.id] == MainPlugin.SELECT:
             if MainPlugin.__hover_shape[Board.id]:
                 MainPlugin.__hover_shape[Board.id].draw(painter, MainPlugin)
 
-        if MainPlugin.__state[Board.id]>=MainPlugin.PAINTING_LINE and MainPlugin.__state[Board.id]<=MainPlugin.MOVING_SHAPE:
+        if MainPlugin.__state[Board.id]>=MainPlugin.PAINT_LINE and MainPlugin.__state[Board.id]<=MainPlugin.MOVING_SHAPE:
+
+            # 绘制悬停对象
+            if MainPlugin.__hover_point[Board.id]:
+                MainPlugin.__hover_point[Board.id].draw(painter, MainPlugin)
+
             # 绘制 匹配到的虚线
             vLine = None
             hLine = None

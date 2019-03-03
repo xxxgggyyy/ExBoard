@@ -79,12 +79,12 @@ class MainWindow(QMainWindow):
                 for drawerItem in drawerItems:
                     self.drawerWdg.addDrawerItem(drawerItem)
             #挂载菜单栏按钮
-            '''if plugin.getFileMenus(QAction):
+            if plugin.getFileMenus(QAction):
                 for action in plugin.getFileMenus(QAction):
                     self.ui.file_menu.addAction(action)
-            if plugin.getFileMenus(QAction):
+            if plugin.getFileMenus(QMenu):
                 for menu in plugin.getFileMenus(QMenu):
-                    self.ui.file_menu.addMenu(menu)'''
+                    self.ui.file_menu.addMenu(menu)
             #挂载menu到menuBar
             if plugin.getMenu():
                 self.ui.menubar.addMenu(plugin.getMenu())
@@ -97,7 +97,8 @@ class MainWindow(QMainWindow):
                     self.ui.top_toolBar.addAction(action)
 
             #挂载插件设置界面控件
-            self.settingDialog.addPluginSetting(plugin.getPluginName(), plugin.getPluginSettingWidget())
+            if plugin.getPluginSettingWidget():
+                self.settingDialog.addPluginSetting(plugin.getPluginName(), plugin.getPluginSettingWidget())
 
             #挂载插件dockwidget 默认在右边
             if plugin.getDockWidgets():
