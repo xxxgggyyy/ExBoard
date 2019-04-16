@@ -1,6 +1,7 @@
 #-*- encoding:utf-8 -*-
 import sys
 from PyQt5.QtWidgets import QApplication
+import PyQt5.sip
 from business import MainWindow, ExInterFace
 
 if __name__=='__main__':
@@ -9,4 +10,4 @@ if __name__=='__main__':
     ExInterFace.init(mw)
     ExInterFace.addBorad("new")
     mw.showMaximized()
-    exit(app.exec())
+    sys.exit(app.exec())

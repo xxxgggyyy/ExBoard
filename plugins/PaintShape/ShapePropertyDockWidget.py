@@ -3,6 +3,8 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
+from business import ExInterFace
+
 class ShapePropertyTableItem:
 
     def __init__(self):
@@ -30,6 +32,7 @@ class NumEditItem(QDoubleSpinBox,ShapePropertyTableItem):
     def valueChangedSlot(self, value):
         if self.shape and self.proName:
             setattr(self.shape, self.proName, self.getValue())  # 为shape赋值
+            ExInterFace.getCurrentBoard().repaint()
 
     def getValue(self):
         return self.value()
@@ -69,6 +72,7 @@ class ExPointItem(QLineEdit, ShapePropertyTableItem):
         try:
             if self.shape and self.proName:
                 setattr(self.shape, self.proName, self.getValue())  # 为shape赋值
+                ExInterFace.getCurrentBoard().repaint()
         except ValueError as e:
             #没有找到',' 或者其他格式错误 不修改 直接赋予原值
             self.setText(self.oriValue)
@@ -111,6 +115,7 @@ class QColorItem(QLineEdit, ShapePropertyTableItem):
         try:
             if self.shape and self.proName:
                 setattr(self.shape, self.proName, self.getValue())  # 为shape赋值
+                ExInterFace.getCurrentBoard().repaint()
         except ValueError as e:
             #没有找到',' 或者其他格式错误 不修改 直接赋予原值
             self.setText(self.oriValue)
@@ -132,6 +137,7 @@ class BoolComboBox(QComboBox, ShapePropertyTableItem):
     def currentIndexChangedSlot(self, index):
         if self.shape and self.proName:
             setattr(self.shape, self.proName, self.getValue())
+            ExInterFace.getCurrentBoard().repaint()
 
     def setShape(self, shape, proName):
         self.shape = shape
@@ -216,8 +222,6 @@ class ShapePropertyDockWidget(QDockWidget):
             if isinstance(valueItem, ShapePropertyTableItem):
                 valueItem.setShape(self.currentShape, propertyList[i]['proName'])
                 valueItem.setValue(getattr(self.currentShape, propertyList[i]['proName']))
-
-
 
     @pyqtSlot(QTableWidgetItem)
     def shapePropertyChanged(self, item):

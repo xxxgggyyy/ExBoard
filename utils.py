@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 import random
 import string
-from Crypto.Cipher import ChaCha20
+#from Crypto.Cipher import ChaCha20
 import base64
 import json
 
+#这个程序里不需要使用加密相关的 注释掉 不然pyinstaller打包后会出现问题
 
 #加密算法密钥
 key=b'\xd9[\x13\xcdGT\x87\x02\xf9\xd6\xd2\xce\x89\r\x86\xe43\xd0\x06\x14\x1dg\n5\xd8\xfc\xdc2\x93\xb63)'
 
 
 #最好是处理utf-8的 另外数字加密会被变为数字字符串再加密
-def encrypt(plaintext):
+'''def encrypt(plaintext):
     if not isinstance(plaintext,str):
         plaintext=str(plaintext)
     ptext=bytes(plaintext,encoding='utf-8')
@@ -22,7 +23,7 @@ def decrypt(secrettext):
     msg_nonce=secrettext[:8]
     ciphertext=secrettext[8:]
     cipher=ChaCha20.new(key=key,nonce=msg_nonce)
-    return str(cipher.decrypt(ciphertext),encoding='utf-8')
+    return str(cipher.decrypt(ciphertext),encoding='utf-8')'''
 
 
 #生成随机字符串
@@ -32,7 +33,7 @@ def randomStr(num):
 
 #此加密仅用于peach2中数据传输格式
 #加密字典 json加密为"{'content:'密文'}" 此加密基于上面的加密
-def encrypt_json(data):
+'''def encrypt_json(data):
     re={}
     data_json=json.dumps(data)
     sec=encrypt(data_json)
@@ -53,4 +54,4 @@ def ParseData(data):
     try:
         return ('success',decrypt_json(data))
     except json.decoder.JSONDecodeError:
-        return ('failed','json格式错误')
+        return ('failed','json格式错误')'''

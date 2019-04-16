@@ -1,6 +1,6 @@
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from PyQt5.Qt import Qt
+#from PyQt5.Qt import Qt
 
 import math
 from .ShapePropertyDockWidget import BoolComboBox, ExPointItem, NumEditItem, QColorItem
@@ -344,7 +344,7 @@ class ExArc(ExShape):
 
     def __init__(self, *args):
         super().__init__()
-        #逆时针方向
+        #顺时针方向 从x轴向下
         self.startAngle = None
         self.spanAngle = None
         self.pt0 = None
@@ -362,6 +362,22 @@ class ExArc(ExShape):
             self.r = args[2]
             self.startAngle = args[3]
             self.spanAngle = args[4]
+
+            #计算端点
+            self.pt0 = ExPoint()
+            self.pt1 = ExPoint()
+            self.pt2 = ExPoint()
+            self.pt0.x = self.center.x + self.r*math.cos(self.startAngle*math.pi/180)
+            self.pt0.y = self.center.y - self.r*math.sin(self.startAngle*math.pi/180)
+
+            #取其中点
+            self.pt1.x = self.center.x + self.r * math.cos((self.startAngle + self.spanAngle/2) * math.pi / 180)
+            self.pt1.y = self.center.y - self.r * math.sin((self.startAngle + self.spanAngle/2) * math.pi / 180)
+
+            self.pt2.x = self.center.x + self.r*math.cos((self.startAngle+self.spanAngle)*math.pi/180)
+            self.pt2.y = self.center.y - self.r*math.sin((self.startAngle+self.spanAngle)*math.pi/180)
+
+
         elif len(args) == 4:
             self.center = args[0]
             self.r = args[1]
@@ -471,7 +487,7 @@ class ExArc(ExShape):
         return True
 
     @staticmethod
-    def calculateAngel(pt,centerPt, r):#计算以centerPt为圆心 pt和x轴的角度 从x轴开始的逆时针角度
+    def calculateAngel(pt,centerPt, r):#计算以centerPt为圆心 pt和x轴的角度 从x轴开始的顺时针角度
         angle = math.asin((pt.y - centerPt.y) / r) * (180 / math.pi)
 
         if pt.y > centerPt.y:
@@ -505,6 +521,8 @@ class ExArc(ExShape):
         rr = (pt.x - self.center.x) ** 2 + (pt.y - self.center.y) ** 2
         r = math.sqrt(rr)
         if r >= self.r - threhold and r <= self.r + threhold:
+            if self.r < threhold:
+                return True
             x = pt.x
             y = pt.y
             if r > self.r:
@@ -518,6 +536,7 @@ class ExArc(ExShape):
                 else:
                     y = pt.y + threhold
             ptTemp = ExPoint(x, y)
+
             angle = ExArc.calculateAngel(ptTemp,self.center,self.r)
             #print(angle," ", self.startAngle, " ",self.spanAngle)
             if angle > self.startAngle and angle < self.startAngle+self.spanAngle:

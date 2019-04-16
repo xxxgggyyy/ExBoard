@@ -79,6 +79,8 @@ class MainPlugin(Plugin):
 
     __origin_cross = ExOriginCross()
 
+    __go_back_stack = {}#撤销和前进
+    __forward_stack = {}
 
     def __init__(self, name):
         super().__init__(name)
@@ -260,16 +262,52 @@ class MainPlugin(Plugin):
         Board = ExInterFace.getCurrentBoard()
         for i in range(len(MainPlugin.__shapes[Board.id])-1, -1, -1):
             if MainPlugin.__shapes[Board.id][i].selected:
-                MainPlugin.__shapes[Board.id].pop(i)
+                deletedShape = MainPlugin.__shapes[Board.id].pop(i)
+                MainPlugin.__go_back_stack[Board.id].append([deletedShape,"delete"])
+
         Board.repaint()
 
     @pyqtSlot(bool)
     def revokeActionTrigger(self):
-        pass
+        Board = ExInterFace.getCurrentBoard()
+
+        if not MainPlugin.__go_back_stack[Board.id]:
+            return
+
+        revokeList = MainPlugin.__go_back_stack[Board.id].pop()
+        if revokeList[1] == "add":
+            revokeList[1] = "delete"
+            #实际删除 即从__shape中移除
+            MainPlugin.__shapes[Board.id].remove(revokeList[0])
+        elif revokeList[1] == "delete":
+            revokeList[1] = "add"
+            MainPlugin.__shapes[Board.id].append(revokeList[0])
+        elif revokeList[1] == "change":
+            temp = copy.deepcopy(revokeList[0])
+            MainPlugin.SynShapObj(revokeList[0],revokeList[2])
+            revokeList[2] = temp
+        MainPlugin.__forward_stack[Board.id].append(revokeList)
 
     @pyqtSlot(bool)
     def forwardActionTrigger(self):
-        pass
+        Board = ExInterFace.getCurrentBoard()
+
+        if not MainPlugin.__forward_stack[Board.id]:
+            return
+
+        revokeList = MainPlugin.__forward_stack[Board.id].pop()
+        if revokeList[1] == "add":
+            revokeList[1] = "delete"
+            # 实际删除 即从__shape中移除
+            MainPlugin.__shapes[Board.id].remove(revokeList[0])
+        elif revokeList[1] == "delete":
+            revokeList[1] = "add"
+            MainPlugin.__shapes[Board.id].append(revokeList[0])
+        elif revokeList[1] == "change":
+            temp = copy.deepcopy(revokeList[0])
+            MainPlugin.SynShapObj(revokeList[0], revokeList[2])
+            revokeList[2] = temp
+        MainPlugin.__go_back_stack[Board.id].append(revokeList)
 
     @pyqtSlot(object, bool)
     def drawerItemChanged(self, item, checked):
@@ -314,6 +352,12 @@ class MainPlugin(Plugin):
         Board = ExInterFace.getCurrentBoard()
 
         key_value = QKeyEvent.key()
+
+        if QKeyEvent.modifiers() == Qt.ControlModifier:
+            if key_value == Qt.Key_Z:
+                self.revokeActionTrigger()
+            elif key_value == Qt.Key_X:
+                self.forwardActionTrigger()
 
         if key_value == Qt.Key_Q:
             self.__drawerItem.setChecked(self.__lineContenItem, True)
@@ -467,6 +511,8 @@ class MainPlugin(Plugin):
             else:
                 MainPlugin.__changing_pt[Board.id].parent.setVisible(True)
 
+
+
         Board.repaint()
 
     def mousePressEvent(self, QMouseEvent):
@@ -504,6 +550,8 @@ class MainPlugin(Plugin):
                 if pt and len(selectedShapes)==1 and pt.parent == selectedShapes[0]:
                     # 如果点到了点且是当前选中的点 就开始准备移动
                     MainPlugin.__state[Board.id] = MainPlugin.MOVING_SHAPE
+                    #放入撤销栈
+                    MainPlugin.__go_back_stack[Board.id].append([selectedShapes[0],"change",copy.deepcopy(selectedShapes[0])])
                     MainPlugin.__changing_pt[Board.id] = pt
                 else:
                     if not QMouseEvent.modifiers() == Qt.ControlModifier:#没有按下ctr 清空所有的选择
@@ -552,20 +600,32 @@ class MainPlugin(Plugin):
                     MainPlugin.__state[Board.id] = MainPlugin.PAINT_ARC
                     MainPlugin.__painting_shape[Board.id].setPt2(matchedPt)
                     MainPlugin.__shapes[Board.id].append(MainPlugin.__painting_shape[Board.id])
+
+                    #增加到go_back中
+                    MainPlugin.addShapeCompeleted(MainPlugin.__painting_shape[Board.id])
+
                     MainPlugin.__painting_shape[Board.id] = None
                     MainPlugin.__assist_line[Board.id] = None
+
             elif MainPlugin.__state[Board.id] == MainPlugin.PAINTING_CIRCLE:
                 if MainPlugin.__painting_shape[Board.id]:
                     MainPlugin.__shapes[Board.id].append(MainPlugin.__painting_shape[Board.id])
                     MainPlugin.__assist_circle[Board.id].setVisible(True)
                     MainPlugin.__assist_circle[Board.id].centerPt = matchedPt
+                    # 增加到go_back中
+                    MainPlugin.addShapeCompeleted(MainPlugin.__painting_shape[Board.id])
                 MainPlugin.__state[Board.id] = MainPlugin.PAINT_CIRCLE
 
             elif MainPlugin.__state[Board.id] == MainPlugin.PAINTING_LINE:
                 if MainPlugin.__painting_shape[Board.id]:
                     MainPlugin.__shapes[Board.id].append(MainPlugin.__painting_shape[Board.id])
+                    # 增加到go_back中
+                    MainPlugin.addShapeCompeleted(MainPlugin.__painting_shape[Board.id])
                     MainPlugin.__painting_shape[Board.id] = None
                 MainPlugin.__state[Board.id] = MainPlugin.PAINT_LINE
+
+
+
             elif MainPlugin.__state[Board.id] == MainPlugin.FREE:
                 pass
             elif MainPlugin.__state[Board.id] == MainPlugin.MOVING_BOARD:
@@ -761,7 +821,7 @@ class MainPlugin(Plugin):
         painter.setRenderHint(QPainter.Antialiasing, True)#打开反走样
         #在坐标转换之前先绘制文字
 
-        #坐标系转换为 x朝上和y朝右的通用数学坐标系
+        #坐标系转换为 y朝上和x朝右的通用数学坐标系
         painter.setWindow(0, Board.height(), Board.width(), -Board.height())
         painter.translate(MainPlugin.__origin_position[Board.id].x * MainPlugin.unit_pixel,
                           MainPlugin.__origin_position[Board.id].y * MainPlugin.unit_pixel)
@@ -851,8 +911,28 @@ class MainPlugin(Plugin):
         MainPlugin.__assist_line[Board.id] = None
         MainPlugin.__changing_pt[Board.id] = None
         MainPlugin.__hand_start_pt[Board.id] = ExPoint()
+        MainPlugin.__go_back_stack[Board.id] = []
+        MainPlugin.__forward_stack[Board.id] = []
         
     @pyqtSlot(int)
     def boardSwitched(self, curindex):
         Board = ExInterFace.getCurrentBoard()
         MainPlugin.__state[Board.id] = self.getCurrentSelectedState()
+
+    @staticmethod
+    def addShape(board, shape):
+        if shape:
+            (MainPlugin.__shapes[board.id]).append(shape)
+
+    @staticmethod
+    def addShapeCompeleted(shape):
+        board = ExInterFace.getCurrentBoard()
+        MainPlugin.__go_back_stack[board.id].append([shape, "add"])#用shape对象自身来索引
+
+    @staticmethod
+    def SynShapObj(shape0, shape1):#将shape1的属性值 赋给shape0
+        if shape0.__class__ == shape1.__class__:
+            for k,v  in shape0.__dict__.items():
+                setattr(shape0, k, getattr(shape1, k))
+        else:
+            raise ValueError("两个shape 必须是同一个类型")
