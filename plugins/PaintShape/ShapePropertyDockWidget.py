@@ -72,6 +72,7 @@ class ExPointItem(QLineEdit, ShapePropertyTableItem):
         try:
             if self.shape and self.proName:
                 setattr(self.shape, self.proName, self.getValue())  # 为shape赋值
+
                 ExInterFace.getCurrentBoard().repaint()
         except ValueError as e:
             #没有找到',' 或者其他格式错误 不修改 直接赋予原值

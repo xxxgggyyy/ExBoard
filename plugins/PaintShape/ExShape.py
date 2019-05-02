@@ -62,7 +62,10 @@ class ExShape:
         if propertyDict["type"] == bool:
             pass
 
-    def calculate(self):#用于有些图形 需要通过间接的计算出来
+    def calculate(self,flag=0):#用于有些图形 需要通过间接的计算出来
+        #这里的flag 主要用在 Arc的计算
+        #0 从点计算出 弧形
+        #1 从弧形计算出点
         return True
 
 
@@ -421,70 +424,73 @@ class ExArc(ExShape):
     def setPt2(self, pt2):
         self.pt2 = pt2
 
-    def calculate(self):
+    def calculate(self, flag=0):
+        if flag==0:
+            #先判断一下三个点是否 在阈值下 为一条直线 如果是 则返回False
+            line = ExLine(self.pt0, self.pt1)
+            line.setThreshold(2.5)
+            if line.isPointOnShapeNoLimit(self.pt2, None):
+                return False
 
-        #先判断一下三个点是否 在阈值下 为一条直线 如果是 则返回False
-        line = ExLine(self.pt0, self.pt1)
-        line.setThreshold(2.5)
-        if line.isPointOnShapeNoLimit(self.pt2, None):
-            return False
+            # 计算直线的一般方程
+            a = self.pt1.y - self.pt0.y
+            b = self.pt0.x - self.pt1.x
+            #c = self.pt1.x * self.pt0.y - self.pt0.x * self.pt1.y
 
-        # 计算直线的一般方程
-        a = self.pt1.y - self.pt0.y
-        b = self.pt0.x - self.pt1.x
-        #c = self.pt1.x * self.pt0.y - self.pt0.x * self.pt1.y
+            # 计算直线的一般方程
+            a1 = self.pt1.y - self.pt2.y
+            b1 = self.pt2.x - self.pt1.x
+            #c1 = self.pt1.x * self.pt2.y - self.pt2.x * self.pt1.y
 
-        # 计算直线的一般方程
-        a1 = self.pt1.y - self.pt2.y
-        b1 = self.pt2.x - self.pt1.x
-        #c1 = self.pt1.x * self.pt2.y - self.pt2.x * self.pt1.y
+            D = -a1*b + a*b1
+            if D == 0:
+                return False
+            k = (a*(self.pt1.y+self.pt0.y) - b*(self.pt1.x + self.pt0.x))/2
+            k1 = (a1*(self.pt2.y+self.pt1.y) - b1*(self.pt2.x + self.pt1.x))/2
+            D1 = k*a1 - a*k1
+            D2 = -b*k1 + k*b1
 
-        D = -a1*b + a*b1
-        if D == 0:
-            return False
-        k = (a*(self.pt1.y+self.pt0.y) - b*(self.pt1.x + self.pt0.x))/2
-        k1 = (a1*(self.pt2.y+self.pt1.y) - b1*(self.pt2.x + self.pt1.x))/2
-        D1 = k*a1 - a*k1
-        D2 = -b*k1 + k*b1
+            centerPt = ExPoint(D1/D, D2/D)
+            self.center = centerPt
+            r = math.sqrt((centerPt.x - self.pt0.x)**2+(centerPt.y - self.pt0.y)**2)
+            self.r = r
 
-        centerPt = ExPoint(D1/D, D2/D)
-        self.center = centerPt
-        r = math.sqrt((centerPt.x - self.pt0.x)**2+(centerPt.y - self.pt0.y)**2)
-        self.r = r
+            '''self.x = centerPt.x - r
+            self.y = centerPt.y - r
+            self.width = 2* r
+            self.height = 2*r'''
 
-        '''self.x = centerPt.x - r
-        self.y = centerPt.y - r
-        self.width = 2* r
-        self.height = 2*r'''
+            angle0 = ExArc.calculateAngel(self.pt0, centerPt, r)
+            angle2 = ExArc.calculateAngel(self.pt2, centerPt, r)
 
-        angle0 = ExArc.calculateAngel(self.pt0, centerPt, r)
-        angle2 = ExArc.calculateAngel(self.pt2, centerPt, r)
+            if angle0 > angle2:
+                startPt = self.pt2
+                endPt = self.pt0
+            else:
+                endPt = self.pt2
+                startPt = self.pt0
 
-        if angle0 > angle2:
-            startPt = self.pt2
-            endPt = self.pt0
-        else:
-            endPt = self.pt2
-            startPt = self.pt0
+            minAngel, maxAngle = (angle0, angle2) if angle0 < angle2 else (angle2, angle0)
 
-        minAngel, maxAngle = (angle0, angle2) if angle0 < angle2 else (angle2, angle0)
+            angle1 = ExArc.calculateAngel(self.pt1, centerPt, r)
 
-        angle1 = ExArc.calculateAngel(self.pt1, centerPt, r)
+            if angle1 < maxAngle and angle1 > minAngel:
+                self.spanAngle = maxAngle - minAngel
+            else:
+                temp = startPt
+                startPt = endPt
+                endPt = temp
+                self.spanAngle = 360 - (maxAngle - minAngel)
 
-        if angle1 < maxAngle and angle1 > minAngel:
-            self.spanAngle = maxAngle - minAngel
-        else:
-            temp = startPt
-            startPt = endPt
-            endPt = temp
-            self.spanAngle = 360 - (maxAngle - minAngel)
+            if startPt is self.pt0:
+                self.startAngle = angle0
+            else:
+                self.startAngle = angle2
 
-        if startPt is self.pt0:
-            self.startAngle = angle0
-        else:
-            self.startAngle = angle2
-
-        return True
+            return True
+        elif flag == 1:
+            #主要是 在用户修改后可以 计算出pt
+            pass
 
     @staticmethod
     def calculateAngel(pt,centerPt, r):#计算以centerPt为圆心 pt和x轴的角度 从x轴开始的顺时针角度

@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from utils import randomStr
 
+from .ExInterFace import  ExInterFace
+
 class Board(QFrame):
 
     NameChanged = pyqtSignal(object)
@@ -62,27 +64,26 @@ class Board(QFrame):
                         self.popMenu.addAction(item)
 
     def mouseReleaseEvent(self, QMouseEvent):
-        if self.__plugins:
-            for plugin in self.__plugins:
-                plugin.mouseReleaseEvent(QMouseEvent)
+        plugin = ExInterFace.getExclusivePlugin()
+        if plugin:
+            plugin.mouseReleaseEvent(QMouseEvent)
 
     def mousePressEvent(self, QMouseEvent):
-        if self.__plugins:
-            for plugin in self.__plugins:
-                plugin.mousePressEvent(QMouseEvent)
+        plugin = ExInterFace.getExclusivePlugin()
+        if plugin:
+            plugin.mousePressEvent(QMouseEvent)
 
     def mouseDoubleClickEvent(self, QMouseEvent):
-        if self.__plugins:
-            for plugin in self.__plugins:
-                plugin.mouseDoubleClickEvent(QMouseEvent)
+        plugin = ExInterFace.getExclusivePlugin()
+        if plugin:
+            plugin.mouseDoubleClickEvent(QMouseEvent)
 
     def mouseMoveEvent(self, QMouseEvent):
-        if self.__plugins:
-            for plugin in self.__plugins:
-                plugin.mouseMoveEvent(QMouseEvent)
+        plugin = ExInterFace.getExclusivePlugin()
+        if plugin:
+            plugin.mouseMoveEvent(QMouseEvent)
 
     def keyPressEvent(self, QKeyEvent):
-
         if self.__plugins:
             for plugin in self.__plugins:
                 plugin.keyPressEvent(QKeyEvent)
@@ -101,9 +102,9 @@ class Board(QFrame):
             print(e)
 
     def wheelEvent(self, QWheelEvent):
-        if self.__plugins:
-            for plugin in self.__plugins:
-                plugin.wheelEvent(QWheelEvent)
+        plugin = ExInterFace.getExclusivePlugin()
+        if plugin:
+            plugin.wheelEvent(QWheelEvent)
 
     def focusInEvent(self, QFocusEvent):
         self.setStyleSheet("border:2px dashed #1a7dc4")

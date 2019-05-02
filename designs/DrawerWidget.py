@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.Qt import *
 from PyQt5 import QtCore
-
+from PyQt5.QtCore import *
 
 
 class DrawerContentItem(QFrame):
@@ -192,6 +192,10 @@ class DrawerItem(QFrame):
 
     def setToggleModel(self, mode):
         self.toggle_mode = mode
+
+    def clearSelected(self):
+        for item in self.contentItems:
+            item.setChecked(False)
 
 
 

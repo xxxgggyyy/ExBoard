@@ -1,4 +1,3 @@
-from .Board import Board
 from .Plugin import Plugin
 
 class ExInterFace:
@@ -6,6 +5,8 @@ class ExInterFace:
     __main_window = None
 
     __plugins = []
+
+    __exclusive_plugin = None
 
     #一些全局设置
     __background_color = 'ffffff'
@@ -44,6 +45,7 @@ class ExInterFace:
 
     @staticmethod
     def addBorad(name):
+        from .Board import Board
         board = Board(name, ExInterFace.__main_window)
         ExInterFace.applySettingToOne(board)
         return ExInterFace.__main_window.addBoard(board)
@@ -73,3 +75,16 @@ class ExInterFace:
     @staticmethod
     def getBoard(index):
         return ExInterFace.__main_window.getBoard(index)
+
+    @staticmethod
+    def exclusive(plugin):
+        '''插件独占除 paintEvent和keyEvent以外的事件'''
+        for _plugin in ExInterFace.__plugins:
+            if _plugin is plugin:
+                ExInterFace.__exclusive_plugin = plugin
+            else:
+                _plugin.otherExlusive()
+
+    @staticmethod
+    def getExclusivePlugin():
+        return ExInterFace.__exclusive_plugin

@@ -117,42 +117,51 @@ class MainPlugin(Plugin):
         self.lineAction = QAction(QIcon(":/paintshape_res/img/line.png"), "直线(&Q)", self.paintShapeMenu)#讲道理 这里可以用eval简化写法
         self.lineAction.setCheckable(True)
         self.lineAction.triggered.connect(self.lineActionToggled)
+        self.lineAction.triggered.connect(self.actionChanged)
         self.paintShapeMenu.addAction(self.lineAction)
 
         self.arcAction = QAction(QIcon(":/paintshape_res/img/arc.png"), "圆弧(&W)", self.paintShapeMenu)
         self.arcAction.setCheckable(True)
         self.arcAction.triggered.connect(self.arcActionToggled)
+        self.arcAction.triggered.connect(self.actionChanged)
         self.paintShapeMenu.addAction(self.arcAction)
 
         self.circleAction = QAction(QIcon(":/paintshape_res/img/circle.png"), "圆(&E)", self.paintShapeMenu)
         self.circleAction.setCheckable(True)
         self.circleAction.triggered.connect(self.circleActionToggled)
+        self.circleAction.triggered.connect(self.actionChanged)
         self.paintShapeMenu.addAction(self.circleAction)
 
         self.handAction = QAction(QIcon(":/paintshape_res/img/hand.png"), "Hand(&R)", self.paintShapeMenu)
         self.handAction.setCheckable(True)
         self.handAction.triggered.connect(self.handActionToggled)
+        self.handAction.triggered.connect(self.actionChanged)
         self.paintShapeMenu.addAction(self.handAction)
 
         self.selectAction = QAction(QIcon(":/paintshape_res/img/select.png"), "选择(&T)", self.paintShapeMenu)
         self.selectAction.setCheckable(True)
         self.selectAction.triggered.connect(self.selectActionToggled)
+        self.selectAction.triggered.connect(self.actionChanged)
         self.paintShapeMenu.addAction(self.selectAction)
 
         self.deleteAction = QAction(QIcon(":/paintshape_res/img/delete.png"),"删除选中(&Delete)",self.paintShapeMenu)
         self.deleteAction.triggered.connect(self.deleteActionTrigger)
+        self.deleteAction.triggered.connect(self.actionChanged)
         self.paintShapeMenu.addAction(self.deleteAction)
 
         self.revokeAction = QAction(QIcon(":/paintshape_res/img/revoke.png"), "撤销(ctr+Z)", self.paintShapeMenu)
         self.revokeAction.triggered.connect(self.revokeActionTrigger)
+        self.revokeAction.triggered.connect(self.actionChanged)
         self.paintShapeMenu.addAction(self.revokeAction)
 
         self.forwardAction = QAction(QIcon(":/paintshape_res/img/forward.png"), "前进(ctr+X)", self.paintShapeMenu)
         self.forwardAction.triggered.connect(self.forwardActionTrigger)
+        self.forwardAction.triggered.connect(self.actionChanged)
         self.paintShapeMenu.addAction(self.forwardAction)
 
         self.showPropertyDockAction = QAction(QIcon(":/paintshape_res/img/show.png"), "显示属性窗口", self.paintShapeMenu)
         self.showPropertyDockAction.triggered.connect(self.propertyDock.show)
+        self.showPropertyDockAction.triggered.connect(self.actionChanged)
         self.paintShapeMenu.addAction(self.showPropertyDockAction)
 
         #连接contentItem的点击信号
@@ -215,6 +224,10 @@ class MainPlugin(Plugin):
                     return MainPlugin.HAND
 
         return MainPlugin.FREE
+
+    @pyqtSlot()
+    def actionChanged(self):
+        ExInterFace.exclusive(self)
 
     @pyqtSlot(bool)
     def lineActionToggled(self, b):
@@ -338,6 +351,8 @@ class MainPlugin(Plugin):
 
         Board.repaint()
 
+        ExInterFace.exclusive(self)
+
     def getToolItems(self):
         return [self.__drawerItem]
 
@@ -355,9 +370,11 @@ class MainPlugin(Plugin):
 
         if QKeyEvent.modifiers() == Qt.ControlModifier:
             if key_value == Qt.Key_Z:
-                self.revokeActionTrigger()
+                self.revokeAction.triggered.emit(True)
+                #self.revokeActionTrigger()
             elif key_value == Qt.Key_X:
-                self.forwardActionTrigger()
+                self.forwardAction.triggered.emit(True)
+                #self.forwardActionTrigger()
 
         if key_value == Qt.Key_Q:
             self.__drawerItem.setChecked(self.__lineContenItem, True)
@@ -378,7 +395,8 @@ class MainPlugin(Plugin):
             elif MainPlugin.__state[Board.id] == MainPlugin.PAINTING_LINE:
                 MainPlugin.__state[Board.id] = MainPlugin.PAINT_LINE
         elif key_value == Qt.Key_Delete:
-            self.deleteActionTrigger()
+            self.deleteAction.triggered.emit(True)
+            #self.deleteActionTrigger()
 
         if MainPlugin.__state[Board.id] == MainPlugin.PAINT_LINE:
             pass
@@ -932,7 +950,11 @@ class MainPlugin(Plugin):
     @staticmethod
     def SynShapObj(shape0, shape1):#将shape1的属性值 赋给shape0
         if shape0.__class__ == shape1.__class__:
-            for k,v  in shape0.__dict__.items():
+            for k,v in shape0.__dict__.items():
                 setattr(shape0, k, getattr(shape1, k))
         else:
             raise ValueError("两个shape 必须是同一个类型")
+
+
+    def otherExlusive(self):
+        self.__drawerItem.clearSelected()

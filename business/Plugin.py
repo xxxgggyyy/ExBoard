@@ -40,9 +40,11 @@ class Plugin(QObject):
         pass
 
     def getTopToolBarActions(self):
+        #顶部工具栏按钮
         pass
 
     def getPopMenus(self):
+        #弃用的
         pass
 
     def getPluginSettingWidget(self):
@@ -76,4 +78,8 @@ class Plugin(QObject):
 
     @pyqtSlot(int)
     def boardSwitched(self, curindex):
+        pass
+
+    def otherExlusive(self):
+        '''当其他插件独占事件时 会调用其他插件的此函数 给其他插件一个处理的接口 比如处理插件独占该插件之后无法使用的按钮'''
         pass
